@@ -1,0 +1,16 @@
+body{
+    min-height: 100vh;
+}
+
+.hero-panel{
+    border-left: 0.4rem solid #198754;
+}
+
+.role-card{
+    height: 100%
+}
+
+.role-card:hover{
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Home | Trekking Management
+{% endblock %}
+
+{% block content %}
+
+<div class="hero-panel bg0white rounded-3 shadow-sm p-4 p-md-5">
+  <div class="row align-items-center">
+    <div class="col-lg-7">
+      <p class="text-success fw-semibold mb-2">
+        Adventure coordination made simpler
+      </p>
+      <h1 class="display-5 fw-bold">
+        Trekking Management Application
+      </h1>
+      <p class="lead text-secondary mt-3">
+        Manage treks, staff assignments, participant bookings,
+        available slots, and trekking history in one place.
+      </p>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <span class="btn btn-success disabled">
+          Login - coming next
+        </span>
+        <span class="btn btn-outline-success disabled">
+          Register - coming next
+        </span>
+      </div>
+    </div>
+
+    <div class="col-lg-5 mt-4 mt-lg-0">
+      <div class="p-4 bg0light reounded-3">
+        <h2 class="h5">
+          Project roles
+        </h2>
+        <p class="mb-2">
+          <strong>Admin:</strong>
+          manages the complete application.
+        </p>
+        <p class="mb-2">
+          <strong>Trek Staff:</strong>
+          assigned treks and participants.
+        </p>
+        <p class="mb-0">
+          <strong>Trekker:</strong>
+          searches and books available treks.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="row g-4 mt-2">
+  <div class="col-md-4">
+    <div class="card role-card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 card-title">
+          Admin
+        </h2>
+        <p class="card-text text-secondary">
+          Create treks, approve staff, assign guides,
+          manage accounts and view bookings.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col=md-4">
+    <div class="card role-card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 card-title">
+          Trek Staff
+        </h2>
+        <p class="card-text text-secondary">
+          View assigned treks, update slots and statuses,
+          and manage participant lists.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card role-card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 card-title">
+          Trekker
+        </h2>
+        <p class="card-text text-secondary">
+          Browse open treks, make bookings, check status,
+          and view trekking history.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
