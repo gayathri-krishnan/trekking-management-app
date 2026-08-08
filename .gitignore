@@ -1,11 +1,11 @@
- .venv/
-__pycache__/
-*.pyc
-*.pyo
+/.venv/
+/__pycache__/
+/*.pyc
+/*.pyo
 
-instance/
-.env
+/instance/
+/.env
 
-.vscode/
-.idea/
-.DS_Store
+/.vscode/
+/.idea/
+/.DS_Store
