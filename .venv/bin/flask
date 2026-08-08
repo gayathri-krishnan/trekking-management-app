@@ -1,6 +1,0 @@
-#!/Users/gayathri.krishnan/personal/2026/learning/BS/may_2026_term/mad1_proj/trekking-management-app/.venv/bin/python3.12
-import sys
-from flask.cli import main
-if __name__ == '__main__':
-    sys.argv[0] = sys.argv[0].removesuffix('.exe')
-    sys.exit(main())
