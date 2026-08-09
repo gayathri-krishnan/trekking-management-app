@@ -16,21 +16,40 @@
 
 <div class="alert alert-success">
     Welcome, {{ current_user.full_name }}.
-    Use this workspace to manage the trekking application.
+    Here is the current system summary.
 </div>
 
+
 {% set summary_cards = [
-    ("Total Treks", "Live count in Milestone 5"),
-    ("Total Users", "Live count in Milestone 5"),
-    ("Total Staff", "Live count in Milestone 5"),
-    ("Total Bookings", "Live count in Milestone 5")
+    (
+        "Total Treks",
+        total_treks,
+        "Current non-archived treks"
+    ),
+    (
+        "Total Users",
+        total_users,
+        "Registered trekkers"
+    ),
+    (
+        "Total Staff",
+        total_staff,
+        "All staff accounts"
+    ),
+    (
+        "Total Bookings",
+        total_bookings,
+        "Complete booking history"
+    )
 ] %}
+
 
 <div class="row g-3 mb-4">
 
-    {% for label, note in summary_cards %}
+    {% for label, value, description in summary_cards %}
 
         <div class="col-sm-6 col-xl-3">
+
             <div class="card border-0 shadow-sm metric-card">
                 <div class="card-body">
 
@@ -39,114 +58,254 @@
                     </p>
 
                     <p class="metric-value mb-2">
-                        &mdash;
+                        {{ value }}
                     </p>
 
                     <p class="small text-secondary mb-0">
-                        {{ note }}
+                        {{ description }}
                     </p>
 
                 </div>
             </div>
+
         </div>
 
     {% endfor %}
 
 </div>
 
+
 <div class="row g-4">
 
-    <div class="col-xl-7">
+    <div class="col-xl-8">
 
         <div class="card border-0 shadow-sm h-100">
+
             <div class="card-body">
 
-                <h2 class="h5 mb-3">
-                    Management Areas
-                </h2>
+                <div
+                    class="d-flex flex-column flex-md-row
+                           justify-content-between align-items-md-center
+                           gap-3 mb-3"
+                >
 
-                <div class="list-group list-group-flush">
+                    <div>
+                        <h2 class="h5 mb-1">
+                            Recent Bookings
+                        </h2>
 
-                    <a
-                        href="{{ url_for('admin.manage_treks') }}"
-                        class="list-group-item
-                               list-group-item-action
-                               px-0"
-                    >
-                        <strong>Treks</strong>
-
-                        <span class="d-block text-secondary small">
-                            Create, edit, archive, and assign staff.
-                        </span>
-                    </a>
-
-                    <a
-                        href="{{ url_for('admin.manage_staff') }}"
-                        class="list-group-item
-                               list-group-item-action
-                               px-0"
-                    >
-                        <strong>Staff</strong>
-
-                        <span class="d-block text-secondary small">
-                            Approve and manage staff accounts.
-                        </span>
-                    </a>
-
-                    <a
-                        href="{{ url_for('admin.manage_users') }}"
-                        class="list-group-item
-                               list-group-item-action
-                               px-0"
-                    >
-                        <strong>Users</strong>
-
-                        <span class="d-block text-secondary small">
-                            View and manage registered trekkers.
-                        </span>
-                    </a>
+                        <p class="small text-secondary mb-0">
+                            The five newest booking records.
+                        </p>
+                    </div>
 
                     <a
                         href="{{ url_for('admin.view_bookings') }}"
-                        class="list-group-item
-                               list-group-item-action
-                               px-0"
+                        class="btn btn-sm btn-outline-success"
                     >
-                        <strong>Bookings</strong>
-
-                        <span class="d-block text-secondary small">
-                            Review booking and trekking history.
-                        </span>
+                        View All Bookings
                     </a>
 
                 </div>
 
+
+                {% if recent_bookings %}
+
+                    {% set status_styles = {
+                        "Booked": "success",
+                        "Cancelled": "secondary",
+                        "Completed": "primary"
+                    } %}
+
+                    <div class="table-responsive">
+
+                        <table
+                            class="table table-hover
+                                   align-middle mb-0"
+                        >
+
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        Booking ID
+                                    </th>
+
+                                    <th scope="col">
+                                        Trekker
+                                    </th>
+
+                                    <th scope="col">
+                                        Trek
+                                    </th>
+
+                                    <th scope="col">
+                                        Booking Date
+                                    </th>
+
+                                    <th scope="col">
+                                        Status
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for booking in recent_bookings %}
+
+                                    <tr>
+
+                                        <td>
+                                            #{{ booking.id }}
+                                        </td>
+
+                                        <td>
+                                            {% if booking.trekker %}
+
+                                                <span
+                                                    class="d-block
+                                                           fw-semibold"
+                                                >
+                                                    {{
+                                                        booking.trekker
+                                                        .full_name
+                                                    }}
+                                                </span>
+
+                                                <span
+                                                    class="d-block
+                                                           small
+                                                           text-secondary"
+                                                >
+                                                    {{
+                                                        booking.trekker
+                                                        .email
+                                                    }}
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="text-secondary">
+                                                    User unavailable
+                                                </span>
+
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if booking.trek %}
+
+                                                {{
+                                                    booking.trek.name
+                                                }}
+
+                                            {% else %}
+
+                                                <span class="text-secondary">
+                                                    Trek unavailable
+                                                </span>
+
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {{
+                                                booking.booking_date
+                                                .strftime("%d %b %Y")
+                                            }}
+                                        </td>
+
+                                        <td>
+                                            <span
+                                                class="badge
+                                                       text-bg-{{
+                                                    status_styles.get(
+                                                        booking.status,
+                                                        'dark'
+                                                    )
+                                                }}"
+                                            >
+                                                {{ booking.status }}
+                                            </span>
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+
+                        <p class="fw-semibold mb-1">
+                            No bookings have been made yet
+                        </p>
+
+                        <p class="small text-secondary mb-0">
+                            Booking records will appear here after
+                            trekkers begin booking open treks.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
             </div>
+
         </div>
 
     </div>
 
-    <div class="col-xl-5">
+
+    <div class="col-xl-4">
 
         <div class="card border-0 shadow-sm h-100">
+
             <div class="card-body">
 
-                <h2 class="h5">
-                    Recent Bookings
+                <h2 class="h5 mb-3">
+                    Quick Management
                 </h2>
 
-                <div class="empty-state mt-3">
-                    <p class="fw-semibold mb-1">
-                        No booking data displayed yet
-                    </p>
+                <div class="d-grid gap-2">
 
-                    <p class="small text-secondary mb-0">
-                        Recent booking information will be connected
-                        to the database in a later milestone.
-                    </p>
+                    <a
+                        href="{{ url_for('admin.manage_treks') }}"
+                        class="btn btn-outline-success text-start"
+                    >
+                        Manage Treks
+                    </a>
+
+                    <a
+                        href="{{ url_for('admin.manage_staff') }}"
+                        class="btn btn-outline-success text-start"
+                    >
+                        Review Staff
+                    </a>
+
+                    <a
+                        href="{{ url_for('admin.manage_users') }}"
+                        class="btn btn-outline-success text-start"
+                    >
+                        Manage Users
+                    </a>
+
+                    <a
+                        href="{{ url_for('admin.search') }}"
+                        class="btn btn-outline-success text-start"
+                    >
+                        Search Records
+                    </a>
+
                 </div>
 
             </div>
+
         </div>
 
     </div>

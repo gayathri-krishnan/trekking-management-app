@@ -1,0 +1,141 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Archive Trek | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    Archive Trek
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="row justify-content-center">
+
+    <div class="col-xl-8">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body p-4 p-md-5">
+
+                <span class="badge text-bg-danger mb-3">
+                    Confirmation Required
+                </span>
+
+                <h2 class="h4">
+                    Archive {{ trek.name }}?
+                </h2>
+
+                <p class="text-secondary">
+                    This removes the trek from normal active lists
+                    but preserves its historical database record.
+                </p>
+
+
+                <dl class="row mt-4">
+
+                    <dt class="col-sm-4">
+                        Trek ID
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        #{{ trek.id }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Location
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.location }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Status
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.status }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Active Bookings
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ active_booking_count }}
+                    </dd>
+
+                </dl>
+
+
+                {% if active_booking_count > 0 %}
+
+                    <div class="alert alert-danger">
+                        This trek cannot be archived while it has
+                        active bookings. The bookings must first be
+                        cancelled or completed.
+                    </div>
+
+                {% elif trek.status == "Ongoing" %}
+
+                    <div class="alert alert-danger">
+                        An ongoing trek cannot be archived.
+                        Complete or close it first.
+                    </div>
+
+                {% else %}
+
+                    <div class="alert alert-warning">
+                        The trek status will become Closed unless
+                        it is already Completed.
+                    </div>
+
+                {% endif %}
+
+
+                <div
+                    class="d-flex flex-column flex-sm-row
+                           justify-content-end gap-2 mt-4"
+                >
+
+                    <a
+                        href="{{ url_for('admin.manage_treks') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                    {% if can_archive %}
+
+                        <form method="post" class="mb-0">
+
+                            <button
+                                type="submit"
+                                class="btn btn-danger"
+                            >
+                                Confirm Archive
+                            </button>
+
+                        </form>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

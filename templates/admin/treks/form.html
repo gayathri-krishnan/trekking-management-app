@@ -1,0 +1,472 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% set is_editing = trek is not none %}
+
+{% block title %}
+    {% if is_editing %}
+        Edit Trek
+    {% else %}
+        Add Trek
+    {% endif %}
+    | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    {% if is_editing %}
+        Edit Trek #{{ trek.id }}
+    {% else %}
+        Add New Trek
+    {% endif %}
+{% endblock %}
+
+{% block dashboard_content %}
+
+{% if errors %}
+
+    <div class="alert alert-danger">
+
+        <p class="fw-semibold mb-2">
+            Please correct the following:
+        </p>
+
+        <ul class="mb-0">
+
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+
+        </ul>
+
+    </div>
+
+{% endif %}
+
+
+{% if is_editing %}
+
+    <div class="alert alert-info">
+        This trek currently has
+        <strong>{{ active_booking_count }}</strong>
+        active booking{% if active_booking_count != 1 %}s{% endif %}.
+        Slot values must preserve enough capacity for those bookings.
+    </div>
+
+{% endif %}
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-body p-4">
+
+        <form method="post">
+
+            <div class="row g-4">
+
+                <div class="col-lg-6">
+
+                    <h2 class="h5 mb-3">
+                        Basic Information
+                    </h2>
+
+
+                    <div class="mb-3">
+
+                        <label
+                            for="name"
+                            class="form-label"
+                        >
+                            Trek Name
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="name"
+                            name="name"
+                            minlength="2"
+                            maxlength="150"
+                            value="{{ form_data.get('name', '') }}"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                            for="location"
+                            class="form-label"
+                        >
+                            Location
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="location"
+                            name="location"
+                            minlength="2"
+                            maxlength="150"
+                            value="{{ form_data.get('location', '') }}"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="difficulty"
+                                class="form-label"
+                            >
+                                Difficulty
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="difficulty"
+                                name="difficulty"
+                                required
+                            >
+
+                                {% for difficulty in difficulties %}
+
+                                    <option
+                                        value="{{ difficulty }}"
+                                        {% if
+                                            form_data.get(
+                                                'difficulty'
+                                            ) == difficulty
+                                        %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ difficulty }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="duration_days"
+                                class="form-label"
+                            >
+                                Duration in Days
+                            </label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="duration_days"
+                                name="duration_days"
+                                min="1"
+                                step="1"
+                                value="{{
+                                    form_data.get(
+                                        'duration_days',
+                                        '1'
+                                    )
+                                }}"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-3 mt-0">
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="total_slots"
+                                class="form-label"
+                            >
+                                Total Slots
+                            </label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="total_slots"
+                                name="total_slots"
+                                min="1"
+                                step="1"
+                                value="{{
+                                    form_data.get(
+                                        'total_slots',
+                                        '10'
+                                    )
+                                }}"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="available_slots"
+                                class="form-label"
+                            >
+                                Available Slots
+                            </label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="available_slots"
+                                name="available_slots"
+                                min="0"
+                                step="1"
+                                value="{{
+                                    form_data.get(
+                                        'available_slots',
+                                        '10'
+                                    )
+                                }}"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-lg-6">
+
+                    <h2 class="h5 mb-3">
+                        Schedule and Management
+                    </h2>
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="start_date"
+                                class="form-label"
+                            >
+                                Start Date
+                            </label>
+
+                            <input
+                                type="date"
+                                class="form-control"
+                                id="start_date"
+                                name="start_date"
+                                value="{{
+                                    form_data.get(
+                                        'start_date',
+                                        ''
+                                    )
+                                }}"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="end_date"
+                                class="form-label"
+                            >
+                                End Date
+                            </label>
+
+                            <input
+                                type="date"
+                                class="form-control"
+                                id="end_date"
+                                name="end_date"
+                                value="{{
+                                    form_data.get(
+                                        'end_date',
+                                        ''
+                                    )
+                                }}"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3 mt-3">
+
+                        <label
+                            for="assigned_staff_id"
+                            class="form-label"
+                        >
+                            Assigned Staff
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="assigned_staff_id"
+                            name="assigned_staff_id"
+                        >
+
+                            <option value="">
+                                -- No staff assigned --
+                            </option>
+
+                            {% for staff in staff_options %}
+
+                                <option
+                                    value="{{ staff.id }}"
+                                    {% if
+                                        form_data.get(
+                                            'assigned_staff_id'
+                                        ) == staff.id|string
+                                    %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ staff.full_name }}
+                                    — {{ staff.email }}
+
+                                    {% if
+                                        not staff.is_approved
+                                        or staff.is_blacklisted
+                                    %}
+                                        — Unavailable
+                                    {% endif %}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        <div class="form-text">
+                            Only approved, non-blacklisted staff
+                            can receive a new assignment.
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                            for="status"
+                            class="form-label"
+                        >
+                            Trek Status
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="status"
+                            name="status"
+                            required
+                        >
+
+                            {% for status in statuses %}
+
+                                <option
+                                    value="{{ status }}"
+                                    {% if
+                                        form_data.get(
+                                            'status'
+                                        ) == status
+                                    %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ status }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                            for="description"
+                            class="form-label"
+                        >
+                            Description
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            id="description"
+                            name="description"
+                            rows="6"
+                            maxlength="2000"
+                            placeholder="Describe the route, terrain, requirements, and important instructions."
+                        >{{ form_data.get('description', '') }}</textarea>
+
+                        <div class="form-text">
+                            Maximum 2000 characters.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <hr class="my-4">
+
+
+            <div
+                class="d-flex flex-column flex-sm-row
+                       justify-content-end gap-2"
+            >
+
+                <a
+                    href="{{ url_for('admin.manage_treks') }}"
+                    class="btn btn-outline-secondary"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn btn-success"
+                >
+                    {% if is_editing %}
+                        Save Changes
+                    {% else %}
+                        Create Trek
+                    {% endif %}
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

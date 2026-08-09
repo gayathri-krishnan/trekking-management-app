@@ -1,0 +1,657 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Manage Treks | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    Manage Treks
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div
+    class="d-flex flex-column flex-md-row
+           justify-content-between align-items-md-center
+           gap-3 mb-4"
+>
+    <div>
+        <p class="text-secondary mb-0">
+            Create, search, edit, assign staff, archive,
+            and restore trekking events.
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('admin.create_trek') }}"
+        class="btn btn-success"
+    >
+        Add New Trek
+    </a>
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('admin.manage_treks') }}"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-lg-4">
+
+                <label
+                    for="q"
+                    class="form-label"
+                >
+                    Search
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="ID, trek name, or location"
+                >
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="difficulty"
+                    class="form-label"
+                >
+                    Difficulty
+                </label>
+
+                <select
+                    class="form-select"
+                    id="difficulty"
+                    name="difficulty"
+                >
+                    <option value="">
+                        All difficulties
+                    </option>
+
+                    {% for difficulty in difficulties %}
+
+                        <option
+                            value="{{ difficulty }}"
+                            {% if difficulty_filter == difficulty %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ difficulty }}
+                        </option>
+
+                    {% endfor %}
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="status"
+                    class="form-label"
+                >
+                    Status
+                </label>
+
+                <select
+                    class="form-select"
+                    id="status"
+                    name="status"
+                >
+                    <option value="">
+                        All statuses
+                    </option>
+
+                    {% for status in statuses %}
+
+                        <option
+                            value="{{ status }}"
+                            {% if status_filter == status %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ status }}
+                        </option>
+
+                    {% endfor %}
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="scope"
+                    class="form-label"
+                >
+                    Records
+                </label>
+
+                <select
+                    class="form-select"
+                    id="scope"
+                    name="scope"
+                >
+                    <option
+                        value="active"
+                        {% if scope == "active" %}
+                            selected
+                        {% endif %}
+                    >
+                        Active
+                    </option>
+
+                    <option
+                        value="archived"
+                        {% if scope == "archived" %}
+                            selected
+                        {% endif %}
+                    >
+                        Archived
+                    </option>
+
+                    <option
+                        value="all"
+                        {% if scope == "all" %}
+                            selected
+                        {% endif %}
+                    >
+                        All
+                    </option>
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Apply Filters
+                    </button>
+
+                    <a
+                        href="{{ url_for('admin.manage_treks') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-body">
+
+        <div
+            class="d-flex flex-column flex-md-row
+                   justify-content-between align-items-md-center
+                   gap-2 mb-3"
+        >
+            <div>
+                <h2 class="h5 mb-1">
+                    Trek Records
+                </h2>
+
+                <p class="small text-secondary mb-0">
+                    {{ pagination.total }}
+                    result{% if pagination.total != 1 %}s{% endif %}
+                    found
+                </p>
+            </div>
+
+            {% if pagination.total > 0 %}
+
+                {% set first_record =
+                    ((pagination.page - 1) * pagination.per_page) + 1
+                %}
+
+                {% set last_record =
+                    first_record + (treks|length) - 1
+                %}
+
+                <span class="small text-secondary">
+                    Showing {{ first_record }}–{{ last_record }}
+                </span>
+
+            {% endif %}
+        </div>
+
+
+        {% if treks %}
+
+            {% set status_styles = {
+                "Pending": "warning",
+                "Approved": "info",
+                "Open": "success",
+                "Closed": "secondary",
+                "Ongoing": "primary",
+                "Completed": "dark"
+            } %}
+
+            {% set difficulty_styles = {
+                "Easy": "success",
+                "Moderate": "warning",
+                "Hard": "danger"
+            } %}
+
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                ID
+                            </th>
+
+                            <th scope="col">
+                                Trek
+                            </th>
+
+                            <th scope="col">
+                                Difficulty
+                            </th>
+
+                            <th scope="col">
+                                Dates
+                            </th>
+
+                            <th scope="col">
+                                Slots
+                            </th>
+
+                            <th scope="col">
+                                Assigned Staff
+                            </th>
+
+                            <th scope="col">
+                                Status
+                            </th>
+
+                            <th scope="col">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for trek in treks %}
+
+                            <tr>
+
+                                <td>
+                                    #{{ trek.id }}
+                                </td>
+
+
+                                <td>
+                                    <span class="d-block fw-semibold">
+                                        {{ trek.name }}
+                                    </span>
+
+                                    <span
+                                        class="d-block small text-secondary"
+                                    >
+                                        {{ trek.location }}
+                                    </span>
+
+                                    {% if trek.is_archived %}
+                                        <span
+                                            class="badge
+                                                   text-bg-secondary
+                                                   mt-1"
+                                        >
+                                            Archived
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+
+                                <td>
+                                    <span
+                                        class="badge text-bg-{{
+                                            difficulty_styles.get(
+                                                trek.difficulty,
+                                                'secondary'
+                                            )
+                                        }}"
+                                    >
+                                        {{ trek.difficulty }}
+                                    </span>
+                                </td>
+
+
+                                <td>
+                                    <span class="d-block">
+                                        {{
+                                            trek.start_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                    </span>
+
+                                    <span
+                                        class="d-block small text-secondary"
+                                    >
+                                        to
+                                        {{
+                                            trek.end_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                    </span>
+                                </td>
+
+
+                                <td>
+                                    <span class="d-block fw-semibold">
+                                        {{ trek.available_slots }}
+                                        available
+                                    </span>
+
+                                    <span
+                                        class="d-block small text-secondary"
+                                    >
+                                        {{ trek.total_slots }} total
+                                    </span>
+                                </td>
+
+
+                                <td>
+                                    {% if trek.assigned_staff %}
+
+                                        <span class="d-block fw-semibold">
+                                            {{
+                                                trek.assigned_staff
+                                                .full_name
+                                            }}
+                                        </span>
+
+                                        <span
+                                            class="d-block small
+                                                   text-secondary"
+                                        >
+                                            ID:
+                                            {{
+                                                trek.assigned_staff.id
+                                            }}
+                                        </span>
+
+                                        {% if
+                                            not trek.assigned_staff
+                                            .is_approved
+                                            or trek.assigned_staff
+                                            .is_blacklisted
+                                        %}
+                                            <span
+                                                class="badge
+                                                       text-bg-danger
+                                                       mt-1"
+                                            >
+                                                Unavailable
+                                            </span>
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        <span class="text-secondary">
+                                            Unassigned
+                                        </span>
+
+                                    {% endif %}
+                                </td>
+
+
+                                <td>
+                                    <span
+                                        class="badge text-bg-{{
+                                            status_styles.get(
+                                                trek.status,
+                                                'secondary'
+                                            )
+                                        }}"
+                                    >
+                                        {{ trek.status }}
+                                    </span>
+                                </td>
+
+
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+
+                                        {% if not trek.is_archived %}
+
+                                            <a
+                                                href="{{
+                                                    url_for(
+                                                        'admin.edit_trek',
+                                                        trek_id=trek.id
+                                                    )
+                                                }}"
+                                                class="btn btn-sm
+                                                       btn-outline-primary"
+                                            >
+                                                Edit
+                                            </a>
+
+                                            <a
+                                                href="{{
+                                                    url_for(
+                                                        'admin.archive_trek',
+                                                        trek_id=trek.id
+                                                    )
+                                                }}"
+                                                class="btn btn-sm
+                                                       btn-outline-danger"
+                                            >
+                                                Archive
+                                            </a>
+
+                                        {% else %}
+
+                                            <form
+                                                method="post"
+                                                action="{{
+                                                    url_for(
+                                                        'admin.restore_trek',
+                                                        trek_id=trek.id
+                                                    )
+                                                }}"
+                                                class="mb-0"
+                                            >
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm
+                                                           btn-outline-success"
+                                                >
+                                                    Restore
+                                                </button>
+                                            </form>
+
+                                        {% endif %}
+
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {% if pagination.pages > 1 %}
+
+                <nav
+                    aria-label="Trek list pages"
+                    class="mt-4"
+                >
+
+                    <ul class="pagination justify-content-center mb-0">
+
+                        <li
+                            class="page-item
+                                   {% if not pagination.has_prev %}
+                                       disabled
+                                   {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'admin.manage_treks',
+                                        page=pagination.prev_num,
+                                        q=search_text,
+                                        difficulty=difficulty_filter,
+                                        status=status_filter,
+                                        scope=scope
+                                    )
+                                    if pagination.has_prev
+                                    else '#'
+                                }}"
+                            >
+                                Previous
+                            </a>
+                        </li>
+
+
+                        {% for page_number in pagination.iter_pages() %}
+
+                            {% if page_number %}
+
+                                <li
+                                    class="page-item
+                                           {% if
+                                               page_number
+                                               == pagination.page
+                                           %}
+                                               active
+                                           {% endif %}"
+                                >
+                                    <a
+                                        class="page-link"
+                                        href="{{
+                                            url_for(
+                                                'admin.manage_treks',
+                                                page=page_number,
+                                                q=search_text,
+                                                difficulty=difficulty_filter,
+                                                status=status_filter,
+                                                scope=scope
+                                            )
+                                        }}"
+                                    >
+                                        {{ page_number }}
+                                    </a>
+                                </li>
+
+                            {% else %}
+
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        …
+                                    </span>
+                                </li>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+
+                        <li
+                            class="page-item
+                                   {% if not pagination.has_next %}
+                                       disabled
+                                   {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'admin.manage_treks',
+                                        page=pagination.next_num,
+                                        q=search_text,
+                                        difficulty=difficulty_filter,
+                                        status=status_filter,
+                                        scope=scope
+                                    )
+                                    if pagination.has_next
+                                    else '#'
+                                }}"
+                            >
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            {% endif %}
+
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <p class="fw-semibold mb-1">
+                    No treks match the current filters
+                </p>
+
+                <p class="small text-secondary mb-3">
+                    Clear the filters or create a new trek.
+                </p>
+
+                <a
+                    href="{{ url_for('admin.create_trek') }}"
+                    class="btn btn-success"
+                >
+                    Add New Trek
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
