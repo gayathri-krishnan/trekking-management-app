@@ -1,0 +1,402 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Manage Staff | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    Manage Staff
+{% endblock %}
+
+{% block dashboard_content %}
+
+{% set cards = [
+    ("Total Staff", total_staff),
+    ("Pending", pending_staff),
+    ("Approved", approved_staff),
+    ("Blacklisted", blacklisted_staff)
+] %}
+
+<div class="row g-3 mb-4">
+    {% for label, value in cards %}
+        <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm metric-card">
+                <div class="card-body">
+                    <p class="small text-secondary mb-2">
+                        {{ label }}
+                    </p>
+
+                    <p class="metric-value mb-0">
+                        {{ value }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('admin.manage_staff') }}"
+            class="row g-3 align-items-end"
+        >
+            <div class="col-md-7">
+                <label for="q" class="form-label">
+                    Search Staff
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="ID, name, email, or phone"
+                >
+            </div>
+
+            <div class="col-md-3">
+                <label for="status" class="form-label">
+                    Status
+                </label>
+
+                <select
+                    class="form-select"
+                    id="status"
+                    name="status"
+                >
+                    <option
+                        value="all"
+                        {% if status_filter == "all" %}selected{% endif %}
+                    >
+                        All
+                    </option>
+
+                    <option
+                        value="pending"
+                        {% if status_filter == "pending" %}selected{% endif %}
+                    >
+                        Pending
+                    </option>
+
+                    <option
+                        value="approved"
+                        {% if status_filter == "approved" %}selected{% endif %}
+                    >
+                        Approved
+                    </option>
+
+                    <option
+                        value="blacklisted"
+                        {% if status_filter == "blacklisted" %}selected{% endif %}
+                    >
+                        Blacklisted
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" type="submit">
+                        Search
+                    </button>
+
+                    <a
+                        href="{{ url_for('admin.manage_staff') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+
+        <div class="mb-3">
+            <h2 class="h5 mb-1">
+                Staff Accounts
+            </h2>
+
+            <p class="small text-secondary mb-0">
+                {{ pagination.total }}
+                result{% if pagination.total != 1 %}s{% endif %}
+                found
+            </p>
+        </div>
+
+        {% if staff_members %}
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Staff Member</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Trek Records</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for staff in staff_members %}
+                            <tr>
+                                <td>
+                                    #{{ staff.id }}
+                                </td>
+
+                                <td>
+                                    <span class="d-block fw-semibold">
+                                        {{ staff.full_name }}
+                                    </span>
+
+                                    <span class="small text-secondary">
+                                        {{ staff.email }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ staff.phone or "Not provided" }}
+                                </td>
+
+                                <td>
+                                    {% if staff.is_blacklisted %}
+                                        <span class="badge text-bg-danger">
+                                            Blacklisted
+                                        </span>
+
+                                    {% elif staff.is_approved %}
+                                        <span class="badge text-bg-success">
+                                            Approved
+                                        </span>
+
+                                    {% else %}
+                                        <span class="badge text-bg-warning">
+                                            Pending
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ staff.assigned_treks|length }}
+                                </td>
+
+                                <td>
+                                    {{
+                                        staff.created_at
+                                        .strftime("%d %b %Y")
+                                    }}
+                                </td>
+
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+
+                                        <a
+                                            href="{{
+                                                url_for(
+                                                    'admin.staff_detail',
+                                                    staff_id=staff.id
+                                                )
+                                            }}"
+                                            class="btn btn-sm
+                                                   btn-outline-primary"
+                                        >
+                                            View
+                                        </a>
+
+                                        {% if staff.is_blacklisted %}
+
+                                            <form
+                                                method="post"
+                                                action="{{
+                                                    url_for(
+                                                        'admin.reactivate_staff',
+                                                        staff_id=staff.id
+                                                    )
+                                                }}"
+                                                class="mb-0"
+                                            >
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm
+                                                           btn-outline-success"
+                                                >
+                                                    Reactivate
+                                                </button>
+                                            </form>
+
+                                        {% elif not staff.is_approved %}
+
+                                            <form
+                                                method="post"
+                                                action="{{
+                                                    url_for(
+                                                        'admin.approve_staff',
+                                                        staff_id=staff.id
+                                                    )
+                                                }}"
+                                                class="mb-0"
+                                            >
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm
+                                                           btn-success"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </form>
+
+                                            <a
+                                                href="{{
+                                                    url_for(
+                                                        'admin.reject_staff',
+                                                        staff_id=staff.id
+                                                    )
+                                                }}"
+                                                class="btn btn-sm
+                                                       btn-outline-danger"
+                                            >
+                                                Reject
+                                            </a>
+
+                                        {% else %}
+
+                                            <a
+                                                href="{{
+                                                    url_for(
+                                                        'admin.blacklist_staff',
+                                                        staff_id=staff.id
+                                                    )
+                                                }}"
+                                                class="btn btn-sm
+                                                       btn-outline-danger"
+                                            >
+                                                Blacklist
+                                            </a>
+
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+
+            {% if pagination.pages > 1 %}
+                <nav aria-label="Staff pages" class="mt-4">
+                    <ul class="pagination justify-content-center mb-0">
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_prev %}disabled{% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'admin.manage_staff',
+                                        page=pagination.prev_num,
+                                        q=search_text,
+                                        status=status_filter
+                                    )
+                                    if pagination.has_prev
+                                    else '#'
+                                }}"
+                            >
+                                Previous
+                            </a>
+                        </li>
+
+                        {% for page_number in pagination.iter_pages() %}
+                            {% if page_number %}
+                                <li
+                                    class="page-item
+                                    {% if page_number == pagination.page %}
+                                        active
+                                    {% endif %}"
+                                >
+                                    <a
+                                        class="page-link"
+                                        href="{{
+                                            url_for(
+                                                'admin.manage_staff',
+                                                page=page_number,
+                                                q=search_text,
+                                                status=status_filter
+                                            )
+                                        }}"
+                                    >
+                                        {{ page_number }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_next %}disabled{% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'admin.manage_staff',
+                                        page=pagination.next_num,
+                                        q=search_text,
+                                        status=status_filter
+                                    )
+                                    if pagination.has_next
+                                    else '#'
+                                }}"
+                            >
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+                </nav>
+            {% endif %}
+
+        {% else %}
+
+            <div class="empty-state">
+                <p class="fw-semibold mb-1">
+                    No Staff accounts found
+                </p>
+
+                <p class="small text-secondary mb-0">
+                    Try clearing or changing the current filters.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

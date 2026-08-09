@@ -1,0 +1,125 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    {{ page_title }} | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    {{ page_title }}
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+
+                <span class="badge text-bg-danger mb-3">
+                    Confirmation Required
+                </span>
+
+                <h2 class="h4">
+                    {{ action_label }} for {{ account.full_name }}?
+                </h2>
+
+                <p class="text-secondary">
+                    {{ description }}
+                </p>
+
+                <dl class="row mt-4">
+                    <dt class="col-sm-4">
+                        Account Type
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ account_kind }}
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        Account ID
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        #{{ account.id }}
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        Email
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ account.email }}
+                    </dd>
+                </dl>
+
+
+                {% for warning in warnings %}
+                    <div class="alert alert-warning">
+                        {{ warning }}
+                    </div>
+                {% endfor %}
+
+
+                {% if affected_treks %}
+
+                    <h3 class="h6 mt-4">
+                        Affected Active Assignments
+                    </h3>
+
+                    <ul>
+                        {% for trek in affected_treks %}
+                            <li>
+                                #{{ trek.id }} — {{ trek.name }}
+                                ({{ trek.status }})
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                {% endif %}
+
+
+                {% if blocked_reason %}
+
+                    <div class="alert alert-danger">
+                        {{ blocked_reason }}
+                    </div>
+
+                {% endif %}
+
+
+                <div
+                    class="d-flex flex-column flex-sm-row
+                           justify-content-end gap-2 mt-4"
+                >
+                    <a
+                        href="{{ cancel_url }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                    {% if not blocked_reason %}
+                        <form method="post" class="mb-0">
+                            <button
+                                type="submit"
+                                class="btn btn-{{ action_button_class }}"
+                            >
+                                Confirm {{ action_label }}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

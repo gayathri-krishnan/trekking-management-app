@@ -1,0 +1,243 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Search | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    Search Records
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('admin.search') }}"
+            class="row g-3"
+        >
+            <div class="col-md-10">
+                <label for="q" class="form-label">
+                    Search Treks, Staff, and Trekkers
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="Enter an ID, name, location, email, or phone"
+                    required
+                >
+            </div>
+
+            <div class="col-md-2 d-grid align-items-end">
+                <button class="btn btn-success" type="submit">
+                    Search
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+
+{% if search_text %}
+
+    <p class="text-secondary">
+        Results for <strong>{{ search_text }}</strong>.
+        Up to ten results are displayed in each category.
+    </p>
+
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2 class="h5 mb-3">
+                Treks
+            </h2>
+
+            {% if trek_results %}
+
+                <div class="list-group list-group-flush">
+                    {% for trek in trek_results %}
+                        <div
+                            class="list-group-item
+                                   d-flex flex-column flex-md-row
+                                   justify-content-between gap-3 px-0"
+                        >
+                            <div>
+                                <strong>
+                                    #{{ trek.id }} — {{ trek.name }}
+                                </strong>
+
+                                <span class="d-block small text-secondary">
+                                    {{ trek.location }} ·
+                                    {{ trek.difficulty }} ·
+                                    {{ trek.status }}
+
+                                    {% if trek.is_archived %}
+                                        · Archived
+                                    {% endif %}
+                                </span>
+                            </div>
+
+                            <a
+                                href="{{
+                                    url_for(
+                                        'admin.manage_treks',
+                                        q=trek.id,
+                                        scope='all'
+                                    )
+                                }}"
+                                class="btn btn-sm btn-outline-primary"
+                            >
+                                View Trek
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+
+                <p class="text-secondary mb-0">
+                    No matching Treks.
+                </p>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <h2 class="h5 mb-3">
+                Staff
+            </h2>
+
+            {% if staff_results %}
+
+                <div class="list-group list-group-flush">
+                    {% for staff in staff_results %}
+                        <div
+                            class="list-group-item
+                                   d-flex flex-column flex-md-row
+                                   justify-content-between gap-3 px-0"
+                        >
+                            <div>
+                                <strong>
+                                    #{{ staff.id }} —
+                                    {{ staff.full_name }}
+                                </strong>
+
+                                <span class="d-block small text-secondary">
+                                    {{ staff.email }}
+                                </span>
+                            </div>
+
+                            <a
+                                href="{{
+                                    url_for(
+                                        'admin.staff_detail',
+                                        staff_id=staff.id
+                                    )
+                                }}"
+                                class="btn btn-sm btn-outline-primary"
+                            >
+                                View Staff
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+
+                <p class="text-secondary mb-0">
+                    No matching Staff accounts.
+                </p>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            <h2 class="h5 mb-3">
+                Trekkers
+            </h2>
+
+            {% if user_results %}
+
+                <div class="list-group list-group-flush">
+                    {% for user in user_results %}
+                        <div
+                            class="list-group-item
+                                   d-flex flex-column flex-md-row
+                                   justify-content-between gap-3 px-0"
+                        >
+                            <div>
+                                <strong>
+                                    #{{ user.id }} —
+                                    {{ user.full_name }}
+                                </strong>
+
+                                <span class="d-block small text-secondary">
+                                    {{ user.email }}
+                                </span>
+                            </div>
+
+                            <a
+                                href="{{
+                                    url_for(
+                                        'admin.user_detail',
+                                        user_id=user.id
+                                    )
+                                }}"
+                                class="btn btn-sm btn-outline-primary"
+                            >
+                                View Trekker
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            {% else %}
+
+                <p class="text-secondary mb-0">
+                    No matching Trekker accounts.
+                </p>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+{% else %}
+
+    <div class="empty-state">
+        <p class="fw-semibold mb-1">
+            Enter a search term
+        </p>
+
+        <p class="small text-secondary mb-0">
+            You can search by record ID, person name, Trek name,
+            location, email, or phone number.
+        </p>
+    </div>
+
+{% endif %}
+
+{% endblock %}

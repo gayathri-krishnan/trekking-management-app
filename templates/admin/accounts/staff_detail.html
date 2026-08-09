@@ -1,0 +1,336 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Staff Details | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    Staff Details
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="d-flex flex-wrap justify-content-between gap-3 mb-4">
+
+    <a
+        href="{{ url_for('admin.manage_staff') }}"
+        class="btn btn-outline-secondary"
+    >
+        Back to Staff
+    </a>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        {% if staff.is_blacklisted %}
+
+            <form
+                method="post"
+                action="{{
+                    url_for(
+                        'admin.reactivate_staff',
+                        staff_id=staff.id
+                    )
+                }}"
+            >
+                <button class="btn btn-success" type="submit">
+                    Reactivate
+                </button>
+            </form>
+
+        {% elif not staff.is_approved %}
+
+            <form
+                method="post"
+                action="{{
+                    url_for(
+                        'admin.approve_staff',
+                        staff_id=staff.id
+                    )
+                }}"
+            >
+                <button class="btn btn-success" type="submit">
+                    Approve
+                </button>
+            </form>
+
+            <a
+                href="{{
+                    url_for(
+                        'admin.reject_staff',
+                        staff_id=staff.id
+                    )
+                }}"
+                class="btn btn-outline-danger"
+            >
+                Reject
+            </a>
+
+        {% else %}
+
+            <a
+                href="{{
+                    url_for(
+                        'admin.blacklist_staff',
+                        staff_id=staff.id
+                    )
+                }}"
+                class="btn btn-outline-danger"
+            >
+                Blacklist
+            </a>
+
+        {% endif %}
+
+    </div>
+</div>
+
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+
+                <h2 class="h5 mb-3">
+                    Account Information
+                </h2>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Staff ID</dt>
+                    <dd class="col-sm-7">#{{ staff.id }}</dd>
+
+                    <dt class="col-sm-5">Name</dt>
+                    <dd class="col-sm-7">{{ staff.full_name }}</dd>
+
+                    <dt class="col-sm-5">Email</dt>
+                    <dd class="col-sm-7">{{ staff.email }}</dd>
+
+                    <dt class="col-sm-5">Phone</dt>
+                    <dd class="col-sm-7">
+                        {{ staff.phone or "Not provided" }}
+                    </dd>
+
+                    <dt class="col-sm-5">Registered</dt>
+                    <dd class="col-sm-7">
+                        {{
+                            staff.created_at
+                            .strftime("%d %b %Y, %I:%M %p")
+                        }}
+                    </dd>
+
+                    <dt class="col-sm-5">Status</dt>
+                    <dd class="col-sm-7">
+                        {% if staff.is_blacklisted %}
+                            <span class="badge text-bg-danger">
+                                Blacklisted
+                            </span>
+
+                        {% elif staff.is_approved %}
+                            <span class="badge text-bg-success">
+                                Approved
+                            </span>
+
+                        {% else %}
+                            <span class="badge text-bg-warning">
+                                Pending Approval
+                            </span>
+                        {% endif %}
+                    </dd>
+                </dl>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+
+                <h2 class="h5">
+                    Assignment Summary
+                </h2>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded">
+                            <p class="small text-secondary mb-1">
+                                Active Assignments
+                            </p>
+
+                            <p class="h3 mb-0">
+                                {{ active_assignments|length }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="p-3 bg-light rounded">
+                            <p class="small text-secondary mb-1">
+                                Historical Assignments
+                            </p>
+
+                            <p class="h3 mb-0">
+                                {{ historical_assignments|length }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="small text-secondary mt-3 mb-0">
+                    Active assignments are removed when staff are
+                    blacklisted. Completed and archived assignments
+                    remain for historical records.
+                </p>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+        <h2 class="h5 mb-3">
+            Active Trek Assignments
+        </h2>
+
+        {% if active_assignments %}
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Trek</th>
+                            <th>Location</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for trek in active_assignments %}
+                            <tr>
+                                <td>
+                                    #{{ trek.id }} — {{ trek.name }}
+                                </td>
+
+                                <td>
+                                    {{ trek.location }}
+                                </td>
+
+                                <td>
+                                    {{
+                                        trek.start_date
+                                        .strftime("%d %b %Y")
+                                    }}
+                                    to
+                                    {{
+                                        trek.end_date
+                                        .strftime("%d %b %Y")
+                                    }}
+                                </td>
+
+                                <td>
+                                    {{ trek.status }}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{{
+                                            url_for(
+                                                'admin.edit_trek',
+                                                trek_id=trek.id
+                                            )
+                                        }}"
+                                        class="btn btn-sm
+                                               btn-outline-primary"
+                                    >
+                                        Edit Trek
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+                <p class="mb-0">
+                    This staff member has no active Trek assignments.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+
+        <h2 class="h5 mb-3">
+            Historical Trek Assignments
+        </h2>
+
+        {% if historical_assignments %}
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Trek</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Archived</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for trek in historical_assignments %}
+                            <tr>
+                                <td>
+                                    #{{ trek.id }} — {{ trek.name }}
+                                </td>
+
+                                <td>
+                                    {{ trek.location }}
+                                </td>
+
+                                <td>
+                                    {{ trek.status }}
+                                </td>
+
+                                <td>
+                                    {{ "Yes" if trek.is_archived else "No" }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+                <p class="mb-0">
+                    No historical Trek assignments exist.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
