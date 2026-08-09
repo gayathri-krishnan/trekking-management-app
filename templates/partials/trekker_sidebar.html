@@ -1,0 +1,79 @@
+<p class="small text-uppercase text-secondary fw-semibold mb-2">
+    Trekker Navigation
+</p>
+
+<nav
+    class="nav nav-pills flex-column gap-1"
+    aria-label="Trekker navigation"
+>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'dashboard' %}active{% endif %}"
+        href="{{ url_for('trekker.dashboard') }}"
+        {% if active_page == "dashboard" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Dashboard
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'treks' %}active{% endif %}"
+        href="{{ url_for('trekker.browse_treks') }}"
+        {% if active_page == "treks" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Browse Treks
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'bookings' %}active{% endif %}"
+        href="{{ url_for('trekker.my_bookings') }}"
+        {% if active_page == "bookings" %}
+            aria-current="page"
+        {% endif %}
+    >
+        My Bookings
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'history' %}active{% endif %}"
+        href="{{ url_for('trekker.history') }}"
+        {% if active_page == "history" %}
+            aria-current="page"
+        {% endif %}
+    >
+        History
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'profile' %}active{% endif %}"
+        href="{{ url_for('trekker.profile') }}"
+        {% if active_page == "profile" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Profile
+    </a>
+
+</nav>
+
+<hr class="my-3">
+
+<form
+    method="post"
+    action="{{ url_for('auth.logout') }}"
+>
+    <button
+        type="submit"
+        class="btn btn-outline-danger w-100"
+    >
+        Logout
+    </button>
+</form>

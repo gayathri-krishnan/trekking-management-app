@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row g-4">
+
+    <aside class="col-12 col-lg-3">
+
+        <div class="card border-0 shadow-sm dashboard-sidebar">
+            <div class="card-body">
+
+                <div class="d-flex align-items-center gap-3 mb-4">
+
+                    <div
+                        class="avatar-circle"
+                        aria-hidden="true"
+                    >
+                        {{ current_user.full_name[:1]|upper }}
+                    </div>
+
+                    <div class="min-width-zero">
+                        <p class="fw-semibold mb-1 text-truncate">
+                            {{ current_user.full_name }}
+                        </p>
+
+                        {% if current_user.role == "admin" %}
+                            <span class="badge text-bg-danger">
+                                Admin
+                            </span>
+
+                        {% elif current_user.role == "staff" %}
+                            <span class="badge text-bg-primary">
+                                Trek Staff
+                            </span>
+
+                        {% elif current_user.role == "trekker" %}
+                            <span class="badge text-bg-success">
+                                Trekker
+                            </span>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                {% if current_user.role == "admin" %}
+
+                    {% include "partials/admin_sidebar.html" %}
+
+                {% elif current_user.role == "staff" %}
+
+                    {% include "partials/staff_sidebar.html" %}
+
+                {% elif current_user.role == "trekker" %}
+
+                    {% include "partials/trekker_sidebar.html" %}
+
+                {% endif %}
+
+            </div>
+        </div>
+
+    </aside>
+
+    <section class="col-12 col-lg-9">
+
+        <header
+            class="d-flex flex-column flex-md-row
+                   justify-content-between align-items-md-center
+                   gap-3 mb-4"
+        >
+
+            <div>
+                <p
+                    class="text-success text-uppercase
+                           fw-semibold small mb-1"
+                >
+                    {% block dashboard_eyebrow %}
+                        Workspace
+                    {% endblock %}
+                </p>
+
+                <h1 class="h2 mb-0">
+                    {% block dashboard_heading %}
+                        Dashboard
+                    {% endblock %}
+                </h1>
+            </div>
+
+            <div class="text-md-end">
+                <p class="small text-secondary mb-1">
+                    Signed in as
+                </p>
+
+                <p class="fw-semibold mb-0">
+                    {{ current_user.email }}
+                </p>
+            </div>
+
+        </header>
+
+        {% block dashboard_content %}
+        {% endblock %}
+
+    </section>
+
+</div>
+
+{% endblock %}

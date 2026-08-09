@@ -1,0 +1,68 @@
+<p class="small text-uppercase text-secondary fw-semibold mb-2">
+    Staff Navigation
+</p>
+
+<nav
+    class="nav nav-pills flex-column gap-1"
+    aria-label="Staff navigation"
+>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'dashboard' %}active{% endif %}"
+        href="{{ url_for('staff.dashboard') }}"
+        {% if active_page == "dashboard" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Dashboard
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'treks' %}active{% endif %}"
+        href="{{ url_for('staff.my_treks') }}"
+        {% if active_page == "treks" %}
+            aria-current="page"
+        {% endif %}
+    >
+        My Treks
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'participants' %}active{% endif %}"
+        href="{{ url_for('staff.participants') }}"
+        {% if active_page == "participants" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Participants
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'profile' %}active{% endif %}"
+        href="{{ url_for('staff.profile') }}"
+        {% if active_page == "profile" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Profile
+    </a>
+
+</nav>
+
+<hr class="my-3">
+
+<form
+    method="post"
+    action="{{ url_for('auth.logout') }}"
+>
+    <button
+        type="submit"
+        class="btn btn-outline-danger w-100"
+    >
+        Logout
+    </button>
+</form>

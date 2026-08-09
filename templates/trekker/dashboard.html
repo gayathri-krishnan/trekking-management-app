@@ -1,32 +1,136 @@
-{% extends "base.html" %}
+{% extends "layouts/dashboard_base.html" %}
 
 {% block title %}
     Trekker Dashboard | Trekking Management
 {% endblock %}
 
-{% block content %}
+{% block dashboard_eyebrow %}
+    Trekker Workspace
+{% endblock %}
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-4">
+{% block dashboard_heading %}
+    Trekker Dashboard
+{% endblock %}
 
-        <span class="badge text-bg-success mb-3">
-            Trekker
-        </span>
+{% block dashboard_content %}
 
-        <h1 class="h3">
-            Trekker Dashboard
-        </h1>
+<div class="alert alert-success">
+    Welcome, {{ current_user.full_name }}.
+    Discover and manage your trekking activities here.
+</div>
 
-        <p class="text-secondary">
-            Welcome, {{ current_user.full_name }}.
-        </p>
+{% set summary_cards = [
+    ("Available Treks", "Live data in Milestone 9"),
+    ("Active Bookings", "Live data in Milestone 10"),
+    ("Completed Treks", "Live data in Milestone 11")
+] %}
 
-        <div class="alert alert-info mb-0">
-            Available treks, bookings, and trekking history
-            will be added in later milestones.
+<div class="row g-3 mb-4">
+
+    {% for label, note in summary_cards %}
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm metric-card">
+                <div class="card-body">
+
+                    <p class="text-secondary small mb-2">
+                        {{ label }}
+                    </p>
+
+                    <p class="metric-value mb-2">
+                        &mdash;
+                    </p>
+
+                    <p class="small text-secondary mb-0">
+                        {{ note }}
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+    {% endfor %}
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+
+                <div
+                    class="d-flex flex-column flex-md-row
+                           justify-content-between align-items-md-center
+                           gap-3 mb-3"
+                >
+                    <div>
+                        <h2 class="h5 mb-1">
+                            Available Treks
+                        </h2>
+
+                        <p class="small text-secondary mb-0">
+                            Approved and open treks will appear here.
+                        </p>
+                    </div>
+
+                    <a
+                        href="{{ url_for('trekker.browse_treks') }}"
+                        class="btn btn-outline-success"
+                    >
+                        Browse Treks
+                    </a>
+                </div>
+
+                <div class="empty-state">
+                    <p class="fw-semibold mb-1">
+                        Trek browsing is not connected yet
+                    </p>
+
+                    <p class="small text-secondary mb-0">
+                        Trek search and filtering will be added
+                        in Milestone 9.
+                    </p>
+                </div>
+
+            </div>
         </div>
 
     </div>
+
+    <div class="col-lg-5">
+
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+
+                <h2 class="h5 mb-3">
+                    My Bookings
+                </h2>
+
+                <div class="empty-state">
+                    <p class="fw-semibold mb-1">
+                        No booking data displayed yet
+                    </p>
+
+                    <p class="small text-secondary mb-3">
+                        Booking functionality will be implemented
+                        in Milestone 10.
+                    </p>
+
+                    <a
+                        href="{{ url_for('trekker.my_bookings') }}"
+                        class="btn btn-sm btn-outline-success"
+                    >
+                        Open My Bookings
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
 </div>
 
 {% endblock %}

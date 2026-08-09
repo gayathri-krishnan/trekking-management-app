@@ -14,3 +14,66 @@ body{
     transform: translateY(-2px);
     transition: transform 0.2s ease;
 }
+
+.dashboard-sidebar {
+    position: sticky;
+    top: 1rem;
+}
+
+.dashboard-nav-link {
+    border-radius: 0.5rem;
+    color: var(--bs-body-color);
+    font-weight: 500;
+}
+
+.dashboard-nav-link:hover {
+    background-color: var(--bs-tertiary-bg);
+    color: var(--bs-success);
+}
+
+.dashboard-sidebar .dashboard-nav-link.active {
+    background-color: var(--bs-success);
+    color: white;
+}
+
+.avatar-circle {
+    width: 3rem;
+    height: 3rem;
+    flex: 0 0 3rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background-color: var(--bs-success-bg-subtle);
+    color: var(--bs-success-text-emphasis);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.min-width-zero {
+    min-width: 0;
+}
+
+.metric-card {
+    height: 100%;
+    min-height: 9rem;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.empty-state {
+    padding: 2rem;
+    border: 1px dashed var(--bs-border-color);
+    border-radius: 0.75rem;
+    background-color: var(--bs-tertiary-bg);
+    text-align: center;
+}
+
+@media (max-width: 991.98px) {
+    .dashboard-sidebar {
+        position: static;
+    }
+}

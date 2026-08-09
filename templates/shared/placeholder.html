@@ -1,0 +1,48 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    {{ page_title }} | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    {{ current_user.role|title }} Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    {{ page_title }}
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4 p-md-5">
+
+        <span class="badge text-bg-secondary mb-3">
+            Planned for {{ planned_milestone }}
+        </span>
+
+        <h2 class="h4">
+            Navigation page created
+        </h2>
+
+        <p class="text-secondary">
+            {{ description }}
+        </p>
+
+        <div class="alert alert-info mb-4">
+            This route and its access protection are working.
+            The complete feature will be implemented in its
+            planned milestone.
+        </div>
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="btn btn-success"
+        >
+            Return to Dashboard
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,32 +1,156 @@
-{% extends "base.html" %}
+{% extends "layouts/dashboard_base.html" %}
 
 {% block title %}
     Admin Dashboard | Trekking Management
 {% endblock %}
 
-{% block content %}
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-4">
+{% block dashboard_heading %}
+    Admin Dashboard
+{% endblock %}
 
-        <span class="badge text-bg-danger mb-3">
-            Admin
-        </span>
+{% block dashboard_content %}
 
-        <h1 class="h3">
-            Admin Dashboard
-        </h1>
+<div class="alert alert-success">
+    Welcome, {{ current_user.full_name }}.
+    Use this workspace to manage the trekking application.
+</div>
 
-        <p class="text-secondary">
-            Welcome, {{ current_user.full_name }}.
-        </p>
+{% set summary_cards = [
+    ("Total Treks", "Live count in Milestone 5"),
+    ("Total Users", "Live count in Milestone 5"),
+    ("Total Staff", "Live count in Milestone 5"),
+    ("Total Bookings", "Live count in Milestone 5")
+] %}
 
-        <div class="alert alert-info mb-0">
-            Authentication is working. Admin statistics and
-            management features will be added in the next milestones.
+<div class="row g-3 mb-4">
+
+    {% for label, note in summary_cards %}
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm metric-card">
+                <div class="card-body">
+
+                    <p class="text-secondary small mb-2">
+                        {{ label }}
+                    </p>
+
+                    <p class="metric-value mb-2">
+                        &mdash;
+                    </p>
+
+                    <p class="small text-secondary mb-0">
+                        {{ note }}
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+    {% endfor %}
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-xl-7">
+
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+
+                <h2 class="h5 mb-3">
+                    Management Areas
+                </h2>
+
+                <div class="list-group list-group-flush">
+
+                    <a
+                        href="{{ url_for('admin.manage_treks') }}"
+                        class="list-group-item
+                               list-group-item-action
+                               px-0"
+                    >
+                        <strong>Treks</strong>
+
+                        <span class="d-block text-secondary small">
+                            Create, edit, archive, and assign staff.
+                        </span>
+                    </a>
+
+                    <a
+                        href="{{ url_for('admin.manage_staff') }}"
+                        class="list-group-item
+                               list-group-item-action
+                               px-0"
+                    >
+                        <strong>Staff</strong>
+
+                        <span class="d-block text-secondary small">
+                            Approve and manage staff accounts.
+                        </span>
+                    </a>
+
+                    <a
+                        href="{{ url_for('admin.manage_users') }}"
+                        class="list-group-item
+                               list-group-item-action
+                               px-0"
+                    >
+                        <strong>Users</strong>
+
+                        <span class="d-block text-secondary small">
+                            View and manage registered trekkers.
+                        </span>
+                    </a>
+
+                    <a
+                        href="{{ url_for('admin.view_bookings') }}"
+                        class="list-group-item
+                               list-group-item-action
+                               px-0"
+                    >
+                        <strong>Bookings</strong>
+
+                        <span class="d-block text-secondary small">
+                            Review booking and trekking history.
+                        </span>
+                    </a>
+
+                </div>
+
+            </div>
         </div>
 
     </div>
+
+    <div class="col-xl-5">
+
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+
+                <h2 class="h5">
+                    Recent Bookings
+                </h2>
+
+                <div class="empty-state mt-3">
+                    <p class="fw-semibold mb-1">
+                        No booking data displayed yet
+                    </p>
+
+                    <p class="small text-secondary mb-0">
+                        Recent booking information will be connected
+                        to the database in a later milestone.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
 </div>
 
 {% endblock %}

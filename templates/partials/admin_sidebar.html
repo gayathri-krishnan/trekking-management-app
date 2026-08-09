@@ -1,0 +1,90 @@
+<p class="small text-uppercase text-secondary fw-semibold mb-2">
+    Admin Navigation
+</p>
+
+<nav
+    class="nav nav-pills flex-column gap-1"
+    aria-label="Admin navigation"
+>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'dashboard' %}active{% endif %}"
+        href="{{ url_for('admin.dashboard') }}"
+        {% if active_page == "dashboard" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Dashboard
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'treks' %}active{% endif %}"
+        href="{{ url_for('admin.manage_treks') }}"
+        {% if active_page == "treks" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Treks
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'staff' %}active{% endif %}"
+        href="{{ url_for('admin.manage_staff') }}"
+        {% if active_page == "staff" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Staff
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'users' %}active{% endif %}"
+        href="{{ url_for('admin.manage_users') }}"
+        {% if active_page == "users" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Users
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'bookings' %}active{% endif %}"
+        href="{{ url_for('admin.view_bookings') }}"
+        {% if active_page == "bookings" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Bookings
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'search' %}active{% endif %}"
+        href="{{ url_for('admin.search') }}"
+        {% if active_page == "search" %}
+            aria-current="page"
+        {% endif %}
+    >
+        Search
+    </a>
+
+</nav>
+
+<hr class="my-3">
+
+<form
+    method="post"
+    action="{{ url_for('auth.logout') }}"
+>
+    <button
+        type="submit"
+        class="btn btn-outline-danger w-100"
+    >
+        Logout
+    </button>
+</form>
