@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Approval Pending | Trekking Management
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 text-center">
+
+                <div class="display-5 mb-3">
+                    ⏳
+                </div>
+
+                <h1 class="h3">
+                    Staff Approval Pending
+                </h1>
+
+                <p class="text-secondary">
+                    Hello, {{ current_user.full_name }}.
+                </p>
+
+                <p>
+                    Your staff registration was successful, but an
+                    administrator must approve your account before
+                    you can access the staff dashboard.
+                </p>
+
+                <div class="alert alert-info mb-4">
+                    You do not need to register again.
+                </div>
+
+                <form
+                    method="post"
+                    action="{{ url_for('auth.logout') }}"
+                >
+                    <button
+                        type="submit"
+                        class="btn btn-outline-success"
+                    >
+                        Logout
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

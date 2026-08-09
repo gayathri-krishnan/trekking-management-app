@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Trekker Dashboard | Trekking Management
+{% endblock %}
+
+{% block content %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+
+        <span class="badge text-bg-success mb-3">
+            Trekker
+        </span>
+
+        <h1 class="h3">
+            Trekker Dashboard
+        </h1>
+
+        <p class="text-secondary">
+            Welcome, {{ current_user.full_name }}.
+        </p>
+
+        <div class="alert alert-info mb-0">
+            Available treks, bookings, and trekking history
+            will be added in later milestones.
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

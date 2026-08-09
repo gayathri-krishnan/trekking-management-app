@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Login | Trekking Management
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-5">
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+
+                <h1 class="h3 text-center mb-2">
+                    Login
+                </h1>
+
+                <p class="text-secondary text-center mb-4">
+                    Admin, staff, and trekkers use the same login page.
+                </p>
+
+                <form
+                    method="post"
+                    action="{{ url_for('auth.login') }}"
+                >
+
+                    <div class="mb-3">
+                        <label
+                            for="email"
+                            class="form-label"
+                        >
+                            Email address
+                        </label>
+
+                        <input
+                            type="email"
+                            class="form-control"
+                            id="email"
+                            name="email"
+                            maxlength="255"
+                            value="{{ request.form.get('email', '') }}"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label
+                            for="password"
+                            class="form-label"
+                        >
+                            Password
+                        </label>
+
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="password"
+                            name="password"
+                            minlength="8"
+                            maxlength="128"
+                            autocomplete="current-password"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            id="remember"
+                            name="remember"
+                            value="yes"
+                            {% if request.form.get('remember') %}
+                                checked
+                            {% endif %}
+                        >
+
+                        <label
+                            class="form-check-label"
+                            for="remember"
+                        >
+                            Remember me
+                        </label>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-success w-100"
+                    >
+                        Login
+                    </button>
+
+                </form>
+
+                <p class="text-center mt-4 mb-0">
+                    Do not have an account?
+
+                    <a href="{{ url_for('auth.register') }}">
+                        Register here
+                    </a>
+                </p>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

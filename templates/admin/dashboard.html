@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Admin Dashboard | Trekking Management
+{% endblock %}
+
+{% block content %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+
+        <span class="badge text-bg-danger mb-3">
+            Admin
+        </span>
+
+        <h1 class="h3">
+            Admin Dashboard
+        </h1>
+
+        <p class="text-secondary">
+            Welcome, {{ current_user.full_name }}.
+        </p>
+
+        <div class="alert alert-info mb-0">
+            Authentication is working. Admin statistics and
+            management features will be added in the next milestones.
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

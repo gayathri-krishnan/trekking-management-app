@@ -20,12 +20,19 @@
         available slots, and trekking history in one place.
       </p>
       <div class="d-flex flex-wrap gap-2 mt-4">
-        <span class="btn btn-success disabled">
-          Login - coming next
-        </span>
-        <span class="btn btn-outline-success disabled">
-          Register - coming next
-        </span>
+          <a
+              class="btn btn-success"
+              href="{{ url_for('auth.login') }}"
+          >
+              Login
+          </a>
+
+          <a
+              class="btn btn-outline-success"
+              href="{{ url_for('auth.register') }}"
+          >
+              Register
+          </a>
       </div>
     </div>
 

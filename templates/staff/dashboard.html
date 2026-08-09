@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Staff Dashboard | Trekking Management
+{% endblock %}
+
+{% block content %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+
+        <span class="badge text-bg-primary mb-3">
+            Trek Staff
+        </span>
+
+        <h1 class="h3">
+            Staff Dashboard
+        </h1>
+
+        <p class="text-secondary">
+            Welcome, {{ current_user.full_name }}.
+        </p>
+
+        <div class="alert alert-info mb-0">
+            Your assigned treks and participant lists will
+            be added in a later milestone.
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
