@@ -16,7 +16,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from decorators import role_required
 from extensions import db
-from models import Booking, Trek, User
+from models import Booking, Trek, User, BookingEvent
 
 
 admin_bp = Blueprint(
@@ -73,6 +73,12 @@ TREK_FORM_FIELDS = (
     "description",
 )
 
+BOOKING_STATUS_FILTERS = (
+    "all",
+    "Booked",
+    "Cancelled",
+    "Completed",
+)
 
 def _render_placeholder(
     page_title: str,
@@ -895,12 +901,6 @@ def _get_role_account_or_404(
     account_id: int,
     expected_role: str,
 ):
-    """
-    Return a User only when its ID and role both match.
-
-    This prevents a Trekker ID from being used in a Staff URL,
-    or a Staff ID from being used in a Trekker URL.
-    """
 
     account = db.get_or_404(
         User,
@@ -918,15 +918,6 @@ def _get_role_account_or_404(
 
 
 def _account_search_expression(search_text: str):
-    """
-    Build a search condition for User accounts.
-
-    Searchable values:
-    - ID
-    - Full name
-    - Email
-    - Phone
-    """
 
     search_pattern = f"%{search_text}%"
 
@@ -949,15 +940,6 @@ def _account_search_expression(search_text: str):
 def _staff_assignments_for_status_change(
     staff_id: int,
 ):
-    """
-    Find non-archived, non-completed treks assigned to a staff
-    member.
-
-    These assignments should normally be removed when the staff
-    account is rejected or blacklisted.
-
-    Completed and archived records are retained for history.
-    """
 
     assignments = db.session.execute(
         db.select(Trek)
@@ -984,9 +966,6 @@ def _staff_assignments_for_status_change(
 def _unassign_treks(
     assignments: list[Trek],
 ) -> int:
-    """
-    Remove the staff assignment from the supplied Trek records.
-    """
 
     for trek in assignments:
         trek.assigned_staff_id = None
@@ -997,9 +976,6 @@ def _unassign_treks(
 def _booking_counts_for_user(
     user_id: int,
 ):
-    """
-    Return booking counts grouped by booking status.
-    """
 
     counts = {
         "Booked": 0,
@@ -1026,15 +1002,36 @@ def _booking_counts_for_user(
         counts["Total"] += count
 
     return counts
+def _all_booking_counts():
+
+    counts = {
+        "Booked": 0,
+        "Cancelled": 0,
+        "Completed": 0,
+        "Total": 0,
+    }
+
+    rows = db.session.execute(
+        db.select(
+            Booking.status,
+            func.count(Booking.id),
+        )
+        .group_by(
+            Booking.status
+        )
+    ).all()
+
+    for status, count in rows:
+        counts[status] = count
+        counts["Total"] += count
+
+    return counts
 
 
 @admin_bp.route("/staff")
 @login_required
 @role_required("admin")
 def manage_staff():
-    """
-    List, search, filter, and manage Staff accounts.
-    """
 
     search_text = request.args.get(
         "q",
@@ -1170,9 +1167,6 @@ def manage_staff():
 @login_required
 @role_required("admin")
 def staff_detail(staff_id):
-    """
-    Display one Staff account and its Trek assignments.
-    """
 
     staff = _get_role_account_or_404(
         staff_id,
@@ -1225,9 +1219,6 @@ def staff_detail(staff_id):
 @login_required
 @role_required("admin")
 def approve_staff(staff_id):
-    """
-    Approve a pending Staff registration.
-    """
 
     staff = _get_role_account_or_404(
         staff_id,
@@ -1270,12 +1261,6 @@ def approve_staff(staff_id):
 @login_required
 @role_required("admin")
 def reject_staff(staff_id):
-    """
-    Reject a pending Staff registration.
-
-    Rejection is stored by blacklisting the unapproved account,
-    rather than permanently deleting it.
-    """
 
     staff = _get_role_account_or_404(
         staff_id,
@@ -1398,10 +1383,6 @@ def reject_staff(staff_id):
 @login_required
 @role_required("admin")
 def blacklist_staff(staff_id):
-    """
-    Blacklist a Staff account and safely remove active
-    assignments.
-    """
 
     staff = _get_role_account_or_404(
         staff_id,
@@ -1519,9 +1500,6 @@ def blacklist_staff(staff_id):
 @login_required
 @role_required("admin")
 def reactivate_staff(staff_id):
-    """
-    Reactivate a blacklisted Staff account.
-    """
 
     staff = _get_role_account_or_404(
         staff_id,
@@ -1572,9 +1550,6 @@ def reactivate_staff(staff_id):
 @login_required
 @role_required("admin")
 def manage_users():
-    """
-    List, search, filter, and manage Trekker accounts.
-    """
 
     search_text = request.args.get(
         "q",
@@ -1688,9 +1663,6 @@ def manage_users():
 @login_required
 @role_required("admin")
 def user_detail(user_id):
-    """
-    Display one Trekker and their booking records.
-    """
 
     user = _get_role_account_or_404(
         user_id,
@@ -1731,9 +1703,6 @@ def user_detail(user_id):
 @login_required
 @role_required("admin")
 def blacklist_user(user_id):
-    """
-    Blacklist a Trekker while preserving booking history.
-    """
 
     user = _get_role_account_or_404(
         user_id,
@@ -1813,9 +1782,6 @@ def blacklist_user(user_id):
 @login_required
 @role_required("admin")
 def reactivate_user(user_id):
-    """
-    Reactivate a blacklisted Trekker.
-    """
 
     user = _get_role_account_or_404(
         user_id,
@@ -1855,24 +1821,154 @@ def reactivate_user(user_id):
 @login_required
 @role_required("admin")
 def view_bookings():
-    return _render_placeholder(
-        page_title="All Bookings",
-        description=(
-            "View active, cancelled, completed, and historical "
-            "Trek bookings."
-        ),
-        active_page="bookings",
-        planned_milestone="Milestone 10",
+
+    search_text = request.args.get(
+        "q",
+        "",
+    ).strip()[:100]
+
+    status_filter = request.args.get(
+        "status",
+        "all",
+    ).strip()
+
+    if status_filter not in BOOKING_STATUS_FILTERS:
+        status_filter = "all"
+
+    statement = (
+        db.select(Booking)
+        .select_from(Booking)
+        .join(
+            User,
+            Booking.user_id == User.id,
+        )
+        .join(
+            Trek,
+            Booking.trek_id == Trek.id,
+        )
+        .options(
+            joinedload(Booking.trekker),
+            joinedload(Booking.trek),
+        )
     )
 
+    if search_text:
+        search_pattern = f"%{search_text}%"
+
+        conditions = [
+            User.full_name.ilike(search_pattern),
+            User.email.ilike(search_pattern),
+            User.phone.ilike(search_pattern),
+            Trek.name.ilike(search_pattern),
+            Trek.location.ilike(search_pattern),
+        ]
+
+        possible_id = search_text.removeprefix("#")
+
+        if possible_id.isdigit():
+            numeric_id = int(
+                possible_id
+            )
+
+            conditions.extend(
+                [
+                    Booking.id == numeric_id,
+                    User.id == numeric_id,
+                    Trek.id == numeric_id,
+                ]
+            )
+
+        statement = statement.where(
+            or_(*conditions)
+        )
+
+    if status_filter != "all":
+        statement = statement.where(
+            Booking.status == status_filter
+        )
+
+    statement = statement.order_by(
+        Booking.booking_date.desc(),
+        Booking.id.desc(),
+    )
+
+    page_number = request.args.get(
+        "page",
+        1,
+        type=int,
+    )
+
+    if page_number is None or page_number < 1:
+        page_number = 1
+
+    pagination = db.paginate(
+        statement,
+        page=page_number,
+        per_page=12,
+        max_per_page=30,
+        error_out=False,
+    )
+
+    return render_template(
+        "admin/bookings/list.html",
+        active_page="bookings",
+        bookings=pagination.items,
+        pagination=pagination,
+        booking_counts=_all_booking_counts(),
+        search_text=search_text,
+        status_filter=status_filter,
+        booking_statuses=BOOKING_STATUS_FILTERS,
+    )
+
+@admin_bp.route(
+    "/bookings/<int:booking_id>"
+)
+@login_required
+@role_required("admin")
+def booking_detail(booking_id):
+
+    booking = db.session.scalar(
+        db.select(Booking)
+        .where(
+            Booking.id == booking_id
+        )
+        .options(
+            joinedload(Booking.trekker),
+            joinedload(Booking.trek),
+        )
+    )
+
+    if booking is None:
+        abort(
+            404,
+            description="The requested Booking does not exist.",
+        )
+
+    events = db.session.execute(
+        db.select(BookingEvent)
+        .where(
+            BookingEvent.booking_id == booking.id
+        )
+        .options(
+            joinedload(BookingEvent.changed_by)
+        )
+        .order_by(
+            BookingEvent.created_at.asc(),
+            BookingEvent.id.asc(),
+        )
+    ).scalars().all()
+
+    return render_template(
+        "admin/bookings/detail.html",
+        active_page="bookings",
+        booking=booking,
+        events=events,
+    )
 
 @admin_bp.route("/search")
 @login_required
 @role_required("admin")
 def search():
-    """
-    Search Treks, Staff, and Trekkers from one screen.
-    """
 
     search_text = request.args.get(
         "q",

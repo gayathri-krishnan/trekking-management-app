@@ -322,8 +322,107 @@ class Booking(db.Model):
         back_populates="bookings",
     )
 
+    events = db.relationship(
+        "BookingEvent",
+        back_populates="booking",
+        cascade="all, delete-orphan",
+        order_by="BookingEvent.created_at",
+    )
+
     def __repr__(self) -> str:
         return (
             f"<Booking {self.id}: "
             f"user={self.user_id}, trek={self.trek_id}>"
+        )
+
+class BookingEvent(db.Model):
+
+    __tablename__ = "booking_events"
+
+    __table_args__ = (
+        db.CheckConstraint(
+            (
+                "event_type IN "
+                "('Booked', 'Rebooked', 'Cancelled', 'Completed')"
+            ),
+            name="ck_booking_events_type",
+        ),
+        db.CheckConstraint(
+            (
+                "previous_status IS NULL OR "
+                "previous_status IN "
+                "('Booked', 'Cancelled', 'Completed')"
+            ),
+            name="ck_booking_events_previous_status",
+        ),
+        db.CheckConstraint(
+            (
+                "new_status IN "
+                "('Booked', 'Cancelled', 'Completed')"
+            ),
+            name="ck_booking_events_new_status",
+        ),
+    )
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    booking_id = db.Column(
+        db.Integer,
+        db.ForeignKey("bookings.id"),
+        nullable=False,
+        index=True,
+    )
+
+    event_type = db.Column(
+        db.String(20),
+        nullable=False,
+        index=True,
+    )
+
+    previous_status = db.Column(
+        db.String(20),
+        nullable=True,
+    )
+
+    new_status = db.Column(
+        db.String(20),
+        nullable=False,
+    )
+
+    changed_by_user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
+
+    note = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.now,
+    )
+
+    booking = db.relationship(
+        "Booking",
+        back_populates="events",
+    )
+
+    changed_by = db.relationship(
+        "User",
+        foreign_keys=[changed_by_user_id],
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<BookingEvent {self.id}: "
+            f"booking={self.booking_id}, "
+            f"event={self.event_type}>"
         )

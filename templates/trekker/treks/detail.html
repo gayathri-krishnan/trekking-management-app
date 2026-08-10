@@ -229,58 +229,136 @@
                     Booking Availability
                 </h2>
 
+                {% if
+                    existing_booking
+                    and existing_booking.status == "Booked"
+                %}
 
-                {% if existing_booking %}
-
-                    <div class="alert alert-info">
-
-                        You already have a booking record for
-                        this Trek.
+                    <div class="alert alert-success">
+                        You have already booked this Trek.
 
                         <span class="d-block mt-2">
+                            Booking ID:
+                            <strong>#{{ existing_booking.id }}</strong>
+                        </span>
+                    </div>
 
-                            Current status:
+                    <a
+                        href="{{
+                            url_for(
+                                'trekker.booking_detail',
+                                booking_id=existing_booking.id
+                            )
+                        }}"
+                        class="btn btn-outline-success w-100"
+                    >
+                        View My Booking
+                    </a>
 
-                            <strong>
-                                {{ existing_booking.status }}
-                            </strong>
 
+                {% elif
+                    existing_booking
+                    and existing_booking.status == "Completed"
+                %}
+
+                    <div class="alert alert-info">
+                        You have already completed this Trek.
+                    </div>
+
+                    <a
+                        href="{{
+                            url_for(
+                                'trekker.booking_detail',
+                                booking_id=existing_booking.id
+                            )
+                        }}"
+                        class="btn btn-outline-primary w-100"
+                    >
+                        View Completed Booking
+                    </a>
+
+
+                {% elif
+                    existing_booking
+                    and existing_booking.status == "Cancelled"
+                %}
+
+                    <div class="alert alert-secondary">
+                        Your previous Booking for this Trek was cancelled.
+                    </div>
+
+                    {% if can_rebook %}
+
+                        <form
+                            method="post"
+                            action="{{
+                                url_for(
+                                    'trekker.book_trek',
+                                    trek_id=trek.id
+                                )
+                            }}"
+                        >
+                            <button
+                                type="submit"
+                                class="btn btn-success w-100"
+                            >
+                                Book This Trek Again
+                            </button>
+                        </form>
+
+                    {% elif trek.status != "Open" %}
+
+                        <span
+                            class="btn btn-secondary disabled w-100"
+                            aria-disabled="true"
+                        >
+                            Trek Is Not Open
                         </span>
 
-                    </div>
+                    {% else %}
+
+                        <span
+                            class="btn btn-secondary disabled w-100"
+                            aria-disabled="true"
+                        >
+                            Trek Is Full
+                        </span>
+
+                    {% endif %}
 
 
                 {% elif is_bookable %}
 
                     <div class="alert alert-success">
-
-                        This Trek is Open and currently has
+                        This Trek is Open and has
                         {{ trek.available_slots }}
                         available
                         slot{% if trek.available_slots != 1 %}s{% endif %}.
-
                     </div>
 
-                    <p class="small text-secondary">
-                        The booking form and overbooking protection
-                        will be connected in Milestone 10.
-                    </p>
-
-                    <span
-                        class="btn btn-success disabled w-100"
-                        aria-disabled="true"
+                    <form
+                        method="post"
+                        action="{{
+                            url_for(
+                                'trekker.book_trek',
+                                trek_id=trek.id
+                            )
+                        }}"
                     >
-                        Booking Available Next Milestone
-                    </span>
+                        <button
+                            type="submit"
+                            class="btn btn-success w-100"
+                        >
+                            Book This Trek
+                        </button>
+                    </form>
 
 
                 {% elif trek.status == "Approved" %}
 
                     <div class="alert alert-info">
-
-                        This Trek is approved but has not yet been
-                        opened for bookings.
-
+                        This Trek is approved but has not yet been opened
+                        for bookings.
                     </div>
 
                     <span
@@ -294,9 +372,7 @@
                 {% else %}
 
                     <div class="alert alert-warning">
-
                         This Trek is currently full.
-
                     </div>
 
                     <span
@@ -307,6 +383,7 @@
                     </span>
 
                 {% endif %}
+
 
 
                 <hr>

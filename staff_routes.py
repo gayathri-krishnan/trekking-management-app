@@ -16,7 +16,7 @@ from sqlalchemy.orm import selectinload
 
 from decorators import approved_staff_required
 from extensions import db
-from models import Booking, Trek, User
+from models import Booking, Trek, User, BookingEvent
 
 
 staff_bp = Blueprint(
@@ -692,8 +692,26 @@ def complete_trek(trek_id):
         trek.available_slots = 0
 
         for booking in active_bookings:
+            previous_status = booking.status
+
             booking.status = "Completed"
             booking.completed_at = completed_at
+
+            event = BookingEvent(
+                booking=booking,
+                event_type="Completed",
+                previous_status=previous_status,
+                new_status="Completed",
+                changed_by_user_id=current_user.id,
+                note=(
+                    f'Trek "{trek.name}" completed by the '
+                    "assigned Staff member."
+                ),
+            )
+
+            db.session.add(
+                event
+            )
 
         db.session.commit()
 

@@ -1,0 +1,372 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    My Bookings | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Trekker Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    My Bookings
+{% endblock %}
+
+{% block dashboard_content %}
+
+{% set cards = [
+    ("Total", booking_counts["Total"]),
+    ("Booked", booking_counts["Booked"]),
+    ("Cancelled", booking_counts["Cancelled"]),
+    ("Completed", booking_counts["Completed"])
+] %}
+
+<div class="row g-3 mb-4">
+    {% for label, value in cards %}
+        <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm metric-card">
+                <div class="card-body">
+                    <p class="small text-secondary mb-2">
+                        {{ label }}
+                    </p>
+
+                    <p class="metric-value mb-0">
+                        {{ value }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('trekker.my_bookings') }}"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-md-7">
+                <label for="q" class="form-label">
+                    Search My Bookings
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="Booking ID, Trek ID, name, or location"
+                >
+            </div>
+
+            <div class="col-md-3">
+                <label for="status" class="form-label">
+                    Status
+                </label>
+
+                <select
+                    class="form-select"
+                    id="status"
+                    name="status"
+                >
+                    {% for status in booking_statuses %}
+                        <option
+                            value="{{ status }}"
+                            {% if status_filter == status %}
+                                selected
+                            {% endif %}
+                        >
+                            {% if status == "all" %}
+                                All statuses
+                            {% else %}
+                                {{ status }}
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <div class="d-grid gap-2">
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Apply
+                    </button>
+
+                    <a
+                        href="{{ url_for('trekker.my_bookings') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+                </div>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+
+        <div class="mb-3">
+            <h2 class="h5 mb-1">
+                Booking Records
+            </h2>
+
+            <p class="small text-secondary mb-0">
+                {{ pagination.total }}
+                result{% if pagination.total != 1 %}s{% endif %}
+                found
+            </p>
+        </div>
+
+
+        {% if bookings %}
+
+            {% set status_styles = {
+                "Booked": "success",
+                "Cancelled": "secondary",
+                "Completed": "primary"
+            } %}
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Trek</th>
+                            <th>Trek Date</th>
+                            <th>Booking Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for booking in bookings %}
+                            <tr>
+
+                                <td>
+                                    #{{ booking.id }}
+                                </td>
+
+                                <td>
+                                    {% if booking.trek %}
+                                        <span class="d-block fw-semibold">
+                                            {{ booking.trek.name }}
+                                        </span>
+
+                                        <span class="small text-secondary">
+                                            #{{ booking.trek.id }}
+                                            ·
+                                            {{ booking.trek.location }}
+                                        </span>
+                                    {% else %}
+                                        Trek unavailable
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if booking.trek %}
+                                        {{
+                                            booking.trek.start_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{
+                                        booking.booking_date
+                                        .strftime("%d %b %Y, %I:%M %p")
+                                    }}
+                                </td>
+
+                                <td>
+                                    <span
+                                        class="badge text-bg-{{
+                                            status_styles.get(
+                                                booking.status,
+                                                'dark'
+                                            )
+                                        }}"
+                                    >
+                                        {{ booking.status }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+
+                                        <a
+                                            href="{{
+                                                url_for(
+                                                    'trekker.booking_detail',
+                                                    booking_id=booking.id
+                                                )
+                                            }}"
+                                            class="btn btn-sm
+                                                   btn-outline-primary"
+                                        >
+                                            Details
+                                        </a>
+
+                                        {% if
+                                            booking.id
+                                            in cancellable_booking_ids
+                                        %}
+                                            <a
+                                                href="{{
+                                                    url_for(
+                                                        'trekker.cancel_booking',
+                                                        booking_id=booking.id
+                                                    )
+                                                }}"
+                                                class="btn btn-sm
+                                                       btn-outline-danger"
+                                            >
+                                                Cancel
+                                            </a>
+                                        {% endif %}
+
+                                    </div>
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+
+            {% if pagination.pages > 1 %}
+
+                <nav
+                    aria-label="Booking pages"
+                    class="mt-4"
+                >
+                    <ul class="pagination justify-content-center">
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_prev %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'trekker.my_bookings',
+                                        page=pagination.prev_num,
+                                        q=search_text,
+                                        status=status_filter
+                                    )
+                                    if pagination.has_prev
+                                    else '#'
+                                }}"
+                            >
+                                Previous
+                            </a>
+                        </li>
+
+                        {% for page_number in pagination.iter_pages() %}
+                            {% if page_number %}
+                                <li
+                                    class="page-item
+                                    {% if
+                                        page_number == pagination.page
+                                    %}
+                                        active
+                                    {% endif %}"
+                                >
+                                    <a
+                                        class="page-link"
+                                        href="{{
+                                            url_for(
+                                                'trekker.my_bookings',
+                                                page=page_number,
+                                                q=search_text,
+                                                status=status_filter
+                                            )
+                                        }}"
+                                    >
+                                        {{ page_number }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_next %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'trekker.my_bookings',
+                                        page=pagination.next_num,
+                                        q=search_text,
+                                        status=status_filter
+                                    )
+                                    if pagination.has_next
+                                    else '#'
+                                }}"
+                            >
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+                </nav>
+
+            {% endif %}
+
+
+        {% else %}
+
+            <div class="empty-state">
+                <p class="fw-semibold mb-1">
+                    No Booking records found
+                </p>
+
+                <p class="small text-secondary mb-3">
+                    Browse the Trek catalogue to find an Open Trek.
+                </p>
+
+                <a
+                    href="{{ url_for('trekker.browse_treks') }}"
+                    class="btn btn-success"
+                >
+                    Browse Treks
+                </a>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

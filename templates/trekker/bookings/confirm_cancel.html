@@ -1,0 +1,81 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Cancel Booking | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Trekker Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    Cancel Booking
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-md-5">
+
+                <span class="badge text-bg-danger mb-3">
+                    Confirmation Required
+                </span>
+
+                <h2 class="h4">
+                    Cancel Booking #{{ booking.id }}?
+                </h2>
+
+                {% if booking.trek %}
+                    <p class="text-secondary">
+                        You are cancelling your Booking for
+                        <strong>{{ booking.trek.name }}</strong>.
+                    </p>
+                {% endif %}
+
+                <div class="alert alert-warning">
+                    The Booking status will become Cancelled and
+                    one slot will be restored, without exceeding
+                    the Trek's total capacity.
+                </div>
+
+                <p>
+                    The Booking record will not be deleted.
+                    It will remain in your Booking history.
+                </p>
+
+                <div
+                    class="d-flex flex-column flex-sm-row
+                           justify-content-end gap-2 mt-4"
+                >
+                    <a
+                        href="{{
+                            url_for(
+                                'trekker.booking_detail',
+                                booking_id=booking.id
+                            )
+                        }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Keep Booking
+                    </a>
+
+                    <form method="post" class="mb-0">
+                        <button
+                            type="submit"
+                            class="btn btn-danger"
+                        >
+                            Confirm Cancellation
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
