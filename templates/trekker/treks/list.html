@@ -1,0 +1,548 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Browse Treks | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Trekker Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    Browse Treks
+{% endblock %}
+
+{% block dashboard_content %}
+
+<p class="text-secondary mb-4">
+    Search Approved and Open Treks by name, ID, description,
+    location, or difficulty.
+</p>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('trekker.browse_treks') }}"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-lg-4">
+
+                <label
+                    for="q"
+                    class="form-label"
+                >
+                    Search Treks
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="Trek ID, name, location, or keyword"
+                >
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="difficulty"
+                    class="form-label"
+                >
+                    Difficulty
+                </label>
+
+                <select
+                    class="form-select"
+                    id="difficulty"
+                    name="difficulty"
+                >
+
+                    <option value="">
+                        All difficulties
+                    </option>
+
+                    {% for difficulty in difficulties %}
+
+                        <option
+                            value="{{ difficulty }}"
+                            {% if difficulty_filter == difficulty %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ difficulty }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="location"
+                    class="form-label"
+                >
+                    Location
+                </label>
+
+                <select
+                    class="form-select"
+                    id="location"
+                    name="location"
+                >
+
+                    <option value="">
+                        All locations
+                    </option>
+
+                    {% for location in location_options %}
+
+                        <option
+                            value="{{ location }}"
+                            {% if location_filter == location %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ location }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="status"
+                    class="form-label"
+                >
+                    Availability
+                </label>
+
+                <select
+                    class="form-select"
+                    id="status"
+                    name="status"
+                >
+
+                    <option
+                        value="all"
+                        {% if status_filter == "all" %}
+                            selected
+                        {% endif %}
+                    >
+                        Approved and Open
+                    </option>
+
+                    <option
+                        value="Open"
+                        {% if status_filter == "Open" %}
+                            selected
+                        {% endif %}
+                    >
+                        Open Now
+                    </option>
+
+                    <option
+                        value="Approved"
+                        {% if status_filter == "Approved" %}
+                            selected
+                        {% endif %}
+                    >
+                        Approved — Not Open Yet
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Apply Filters
+                    </button>
+
+                    <a
+                        href="{{ url_for('trekker.browse_treks') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div
+    class="d-flex flex-column flex-md-row
+           justify-content-between align-items-md-center
+           gap-2 mb-3"
+>
+
+    <div>
+
+        <h2 class="h5 mb-1">
+            Trek Catalogue
+        </h2>
+
+        <p class="small text-secondary mb-0">
+            {{ pagination.total }}
+            result{% if pagination.total != 1 %}s{% endif %}
+            found
+        </p>
+
+    </div>
+
+
+    {% if pagination.total > 0 %}
+
+        {% set first_record =
+            ((pagination.page - 1) * pagination.per_page) + 1
+        %}
+
+        {% set last_record =
+            first_record + (treks|length) - 1
+        %}
+
+        <span class="small text-secondary">
+            Showing {{ first_record }}–{{ last_record }}
+        </span>
+
+    {% endif %}
+
+</div>
+
+
+{% if treks %}
+
+    {% set difficulty_styles = {
+        "Easy": "success",
+        "Moderate": "warning",
+        "Hard": "danger"
+    } %}
+
+
+    <div class="row g-4">
+
+        {% for trek in treks %}
+
+            <div class="col-md-6">
+
+                <article class="card border-0 shadow-sm h-100">
+
+                    <div class="card-body d-flex flex-column">
+
+                        <div
+                            class="d-flex justify-content-between
+                                   align-items-start gap-3 mb-3"
+                        >
+
+                            <div>
+
+                                <h3 class="h5 mb-1">
+                                    {{ trek.name }}
+                                </h3>
+
+                                <p class="small text-secondary mb-0">
+                                    Trek ID: #{{ trek.id }}
+                                </p>
+
+                            </div>
+
+
+                            {% if trek.status == "Open" %}
+
+                                {% if trek.available_slots > 0 %}
+
+                                    <span class="badge text-bg-success">
+                                        Open
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge text-bg-danger">
+                                        Full
+                                    </span>
+
+                                {% endif %}
+
+                            {% else %}
+
+                                <span class="badge text-bg-info">
+                                    Approved
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <p class="mb-2">
+
+                            <strong>Location:</strong>
+                            {{ trek.location }}
+
+                        </p>
+
+
+                        <p class="mb-2">
+
+                            <strong>Difficulty:</strong>
+
+                            <span
+                                class="badge text-bg-{{
+                                    difficulty_styles.get(
+                                        trek.difficulty,
+                                        'secondary'
+                                    )
+                                }}"
+                            >
+                                {{ trek.difficulty }}
+                            </span>
+
+                        </p>
+
+
+                        <p class="mb-2">
+
+                            <strong>Dates:</strong>
+
+                            {{
+                                trek.start_date
+                                .strftime("%d %b %Y")
+                            }}
+                            to
+                            {{
+                                trek.end_date
+                                .strftime("%d %b %Y")
+                            }}
+
+                        </p>
+
+
+                        <p class="mb-2">
+
+                            <strong>Duration:</strong>
+
+                            {{ trek.duration_days }}
+                            day{% if trek.duration_days != 1 %}s{% endif %}
+
+                        </p>
+
+
+                        <p class="mb-3">
+
+                            <strong>Available Slots:</strong>
+
+                            {{ trek.available_slots }}
+                            of {{ trek.total_slots }}
+
+                        </p>
+
+
+                        {% if trek.description %}
+
+                            <p class="text-secondary small">
+                                {{
+                                    trek.description
+                                    |truncate(150, True, "…")
+                                }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <div class="mt-auto pt-2">
+
+                            <a
+                                href="{{
+                                    url_for(
+                                        'trekker.trek_detail',
+                                        trek_id=trek.id
+                                    )
+                                }}"
+                                class="btn btn-outline-success w-100"
+                            >
+                                View Trek Details
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    {% if pagination.pages > 1 %}
+
+        <nav
+            aria-label="Trek catalogue pages"
+            class="mt-4"
+        >
+
+            <ul class="pagination justify-content-center">
+
+                <li
+                    class="page-item
+                    {% if not pagination.has_prev %}
+                        disabled
+                    {% endif %}"
+                >
+
+                    <a
+                        class="page-link"
+                        href="{{
+                            url_for(
+                                'trekker.browse_treks',
+                                page=pagination.prev_num,
+                                q=search_text,
+                                difficulty=difficulty_filter,
+                                location=location_filter,
+                                status=status_filter
+                            )
+                            if pagination.has_prev
+                            else '#'
+                        }}"
+                    >
+                        Previous
+                    </a>
+
+                </li>
+
+
+                {% for page_number in pagination.iter_pages() %}
+
+                    {% if page_number %}
+
+                        <li
+                            class="page-item
+                            {% if page_number == pagination.page %}
+                                active
+                            {% endif %}"
+                        >
+
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'trekker.browse_treks',
+                                        page=page_number,
+                                        q=search_text,
+                                        difficulty=difficulty_filter,
+                                        location=location_filter,
+                                        status=status_filter
+                                    )
+                                }}"
+                            >
+                                {{ page_number }}
+                            </a>
+
+                        </li>
+
+                    {% else %}
+
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                …
+                            </span>
+                        </li>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                <li
+                    class="page-item
+                    {% if not pagination.has_next %}
+                        disabled
+                    {% endif %}"
+                >
+
+                    <a
+                        class="page-link"
+                        href="{{
+                            url_for(
+                                'trekker.browse_treks',
+                                page=pagination.next_num,
+                                q=search_text,
+                                difficulty=difficulty_filter,
+                                location=location_filter,
+                                status=status_filter
+                            )
+                            if pagination.has_next
+                            else '#'
+                        }}"
+                    >
+                        Next
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+    {% endif %}
+
+
+{% else %}
+
+    <div class="empty-state">
+
+        <p class="fw-semibold mb-1">
+            No Treks match the selected filters
+        </p>
+
+        <p class="small text-secondary mb-3">
+            Try another search term, difficulty, location,
+            or availability selection.
+        </p>
+
+        <a
+            href="{{ url_for('trekker.browse_treks') }}"
+            class="btn btn-outline-success"
+        >
+            Clear All Filters
+        </a>
+
+    </div>
+
+{% endif %}
+
+{% endblock %}

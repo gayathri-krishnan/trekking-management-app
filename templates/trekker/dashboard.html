@@ -19,45 +19,65 @@
     Discover and manage your trekking activities here.
 </div>
 
+
 {% set summary_cards = [
-    ("Available Treks", "Live data in Milestone 9"),
-    ("Active Bookings", "Live data in Milestone 10"),
-    ("Completed Treks", "Live data in Milestone 11")
+    (
+        "Available Treks",
+        available_treks_count,
+        "Open Treks with available slots"
+    ),
+    (
+        "Active Bookings",
+        active_bookings_count,
+        "Current Booked records"
+    ),
+    (
+        "Completed Treks",
+        completed_treks_count,
+        "Completed booking history"
+    )
 ] %}
+
 
 <div class="row g-3 mb-4">
 
-    {% for label, note in summary_cards %}
+    {% for label, value, description in summary_cards %}
 
         <div class="col-md-4">
+
             <div class="card border-0 shadow-sm metric-card">
+
                 <div class="card-body">
 
-                    <p class="text-secondary small mb-2">
+                    <p class="small text-secondary mb-2">
                         {{ label }}
                     </p>
 
                     <p class="metric-value mb-2">
-                        &mdash;
+                        {{ value }}
                     </p>
 
                     <p class="small text-secondary mb-0">
-                        {{ note }}
+                        {{ description }}
                     </p>
 
                 </div>
+
             </div>
+
         </div>
 
     {% endfor %}
 
 </div>
 
+
 <div class="row g-4">
 
-    <div class="col-lg-7">
+    <div class="col-xl-7">
 
         <div class="card border-0 shadow-sm h-100">
+
             <div class="card-body">
 
                 <div
@@ -65,68 +85,205 @@
                            justify-content-between align-items-md-center
                            gap-3 mb-3"
                 >
+
                     <div>
+
                         <h2 class="h5 mb-1">
-                            Available Treks
+                            Open Treks
                         </h2>
 
                         <p class="small text-secondary mb-0">
-                            Approved and open treks will appear here.
+                            Upcoming Open Treks with available slots.
                         </p>
+
                     </div>
 
                     <a
                         href="{{ url_for('trekker.browse_treks') }}"
                         class="btn btn-outline-success"
                     >
-                        Browse Treks
+                        Browse All Treks
                     </a>
+
                 </div>
 
-                <div class="empty-state">
-                    <p class="fw-semibold mb-1">
-                        Trek browsing is not connected yet
-                    </p>
 
-                    <p class="small text-secondary mb-0">
-                        Trek search and filtering will be added
-                        in Milestone 9.
-                    </p>
-                </div>
+                {% if featured_treks %}
+
+                    <div class="list-group list-group-flush">
+
+                        {% for trek in featured_treks %}
+
+                            <div
+                                class="list-group-item px-0
+                                       d-flex flex-column flex-md-row
+                                       justify-content-between gap-3"
+                            >
+
+                                <div>
+
+                                    <span class="d-block fw-semibold">
+                                        #{{ trek.id }} — {{ trek.name }}
+                                    </span>
+
+                                    <span class="d-block small text-secondary">
+                                        {{ trek.location }}
+                                        ·
+                                        {{ trek.difficulty }}
+                                    </span>
+
+                                    <span class="d-block small text-secondary">
+                                        {{
+                                            trek.start_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                        to
+                                        {{
+                                            trek.end_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                    </span>
+
+                                    <span class="d-block small text-success">
+                                        {{ trek.available_slots }}
+                                        slot{% if trek.available_slots != 1 %}s{% endif %}
+                                        available
+                                    </span>
+
+                                </div>
+
+                                <div class="align-self-md-center">
+
+                                    <a
+                                        href="{{
+                                            url_for(
+                                                'trekker.trek_detail',
+                                                trek_id=trek.id
+                                            )
+                                        }}"
+                                        class="btn btn-sm
+                                               btn-outline-primary"
+                                    >
+                                        View Details
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+
+                        <p class="fw-semibold mb-1">
+                            No Open Treks are currently available
+                        </p>
+
+                        <p class="small text-secondary mb-0">
+                            Approved Treks may still be visible on
+                            the Browse Treks page.
+                        </p>
+
+                    </div>
+
+                {% endif %}
 
             </div>
+
         </div>
 
     </div>
 
-    <div class="col-lg-5">
+
+    <div class="col-xl-5">
 
         <div class="card border-0 shadow-sm h-100">
+
             <div class="card-body">
 
-                <h2 class="h5 mb-3">
-                    My Bookings
-                </h2>
+                <div
+                    class="d-flex justify-content-between
+                           align-items-center gap-3 mb-3"
+                >
 
-                <div class="empty-state">
-                    <p class="fw-semibold mb-1">
-                        No booking data displayed yet
-                    </p>
-
-                    <p class="small text-secondary mb-3">
-                        Booking functionality will be implemented
-                        in Milestone 10.
-                    </p>
+                    <h2 class="h5 mb-0">
+                        Active Bookings
+                    </h2>
 
                     <a
                         href="{{ url_for('trekker.my_bookings') }}"
                         class="btn btn-sm btn-outline-success"
                     >
-                        Open My Bookings
+                        View All
                     </a>
+
                 </div>
 
+
+                {% if active_bookings %}
+
+                    <div class="list-group list-group-flush">
+
+                        {% for booking in active_bookings %}
+
+                            <div class="list-group-item px-0">
+
+                                {% if booking.trek %}
+
+                                    <span class="d-block fw-semibold">
+                                        {{ booking.trek.name }}
+                                    </span>
+
+                                    <span class="d-block small text-secondary">
+                                        {{
+                                            booking.trek.start_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                        ·
+                                        {{ booking.trek.location }}
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="text-secondary">
+                                        Trek unavailable
+                                    </span>
+
+                                {% endif %}
+
+                                <span class="badge text-bg-success mt-1">
+                                    {{ booking.status }}
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+
+                        <p class="fw-semibold mb-1">
+                            No active bookings
+                        </p>
+
+                        <p class="small text-secondary mb-0">
+                            Booking functionality will be added in
+                            Milestone 10.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
             </div>
+
         </div>
 
     </div>

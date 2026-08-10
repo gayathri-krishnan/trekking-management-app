@@ -1,0 +1,362 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    {{ trek.name }} | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Trekker Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    Trek Details
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="mb-4">
+
+    <a
+        href="{{ url_for('trekker.browse_treks') }}"
+        class="btn btn-outline-secondary"
+    >
+        Back to Browse Treks
+    </a>
+
+</div>
+
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        <article class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div
+                    class="d-flex flex-column flex-md-row
+                           justify-content-between align-items-md-start
+                           gap-3 mb-4"
+                >
+
+                    <div>
+
+                        <p
+                            class="text-success text-uppercase
+                                   fw-semibold small mb-1"
+                        >
+                            Trek #{{ trek.id }}
+                        </p>
+
+                        <h2 class="h3 mb-1">
+                            {{ trek.name }}
+                        </h2>
+
+                        <p class="text-secondary mb-0">
+                            {{ trek.location }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <span class="badge text-bg-secondary">
+                            {{ trek.difficulty }}
+                        </span>
+
+                        {% if trek.status == "Open" %}
+
+                            {% if trek.available_slots > 0 %}
+
+                                <span class="badge text-bg-success">
+                                    Open
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge text-bg-danger">
+                                    Full
+                                </span>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            <span class="badge text-bg-info">
+                                Approved
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-sm-6 col-xl-3">
+
+                        <div class="p-3 bg-light rounded h-100">
+
+                            <p class="small text-secondary mb-1">
+                                Start Date
+                            </p>
+
+                            <p class="fw-semibold mb-0">
+                                {{
+                                    trek.start_date
+                                    .strftime("%d %b %Y")
+                                }}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-sm-6 col-xl-3">
+
+                        <div class="p-3 bg-light rounded h-100">
+
+                            <p class="small text-secondary mb-1">
+                                End Date
+                            </p>
+
+                            <p class="fw-semibold mb-0">
+                                {{
+                                    trek.end_date
+                                    .strftime("%d %b %Y")
+                                }}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-sm-6 col-xl-3">
+
+                        <div class="p-3 bg-light rounded h-100">
+
+                            <p class="small text-secondary mb-1">
+                                Duration
+                            </p>
+
+                            <p class="fw-semibold mb-0">
+                                {{ trek.duration_days }}
+                                day{% if trek.duration_days != 1 %}s{% endif %}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-sm-6 col-xl-3">
+
+                        <div class="p-3 bg-light rounded h-100">
+
+                            <p class="small text-secondary mb-1">
+                                Available Slots
+                            </p>
+
+                            <p class="fw-semibold mb-0">
+                                {{ trek.available_slots }}
+                                / {{ trek.total_slots }}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <h3 class="h5">
+                    Trek Description
+                </h3>
+
+                {% if trek.description %}
+
+                    <p class="mb-4">
+                        {{ trek.description }}
+                    </p>
+
+                {% else %}
+
+                    <p class="text-secondary mb-4">
+                        No detailed description has been provided.
+                    </p>
+
+                {% endif %}
+
+
+                <h3 class="h5">
+                    Trek Guide
+                </h3>
+
+                {% if trek.assigned_staff %}
+
+                    <p class="mb-0">
+                        {{ trek.assigned_staff.full_name }}
+                    </p>
+
+                {% else %}
+
+                    <p class="text-secondary mb-0">
+                        A Trek Staff member has not yet been assigned.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        </article>
+
+    </div>
+
+
+    <div class="col-lg-4">
+
+        <aside class="card border-0 shadow-sm">
+
+            <div class="card-body p-4">
+
+                <h2 class="h5 mb-3">
+                    Booking Availability
+                </h2>
+
+
+                {% if existing_booking %}
+
+                    <div class="alert alert-info">
+
+                        You already have a booking record for
+                        this Trek.
+
+                        <span class="d-block mt-2">
+
+                            Current status:
+
+                            <strong>
+                                {{ existing_booking.status }}
+                            </strong>
+
+                        </span>
+
+                    </div>
+
+
+                {% elif is_bookable %}
+
+                    <div class="alert alert-success">
+
+                        This Trek is Open and currently has
+                        {{ trek.available_slots }}
+                        available
+                        slot{% if trek.available_slots != 1 %}s{% endif %}.
+
+                    </div>
+
+                    <p class="small text-secondary">
+                        The booking form and overbooking protection
+                        will be connected in Milestone 10.
+                    </p>
+
+                    <span
+                        class="btn btn-success disabled w-100"
+                        aria-disabled="true"
+                    >
+                        Booking Available Next Milestone
+                    </span>
+
+
+                {% elif trek.status == "Approved" %}
+
+                    <div class="alert alert-info">
+
+                        This Trek is approved but has not yet been
+                        opened for bookings.
+
+                    </div>
+
+                    <span
+                        class="btn btn-secondary disabled w-100"
+                        aria-disabled="true"
+                    >
+                        Not Open for Booking
+                    </span>
+
+
+                {% else %}
+
+                    <div class="alert alert-warning">
+
+                        This Trek is currently full.
+
+                    </div>
+
+                    <span
+                        class="btn btn-secondary disabled w-100"
+                        aria-disabled="true"
+                    >
+                        No Slots Available
+                    </span>
+
+                {% endif %}
+
+
+                <hr>
+
+
+                <dl class="row small mb-0">
+
+                    <dt class="col-6">
+                        Trek Status
+                    </dt>
+
+                    <dd class="col-6 text-end">
+                        {{ trek.status }}
+                    </dd>
+
+
+                    <dt class="col-6">
+                        Difficulty
+                    </dt>
+
+                    <dd class="col-6 text-end">
+                        {{ trek.difficulty }}
+                    </dd>
+
+
+                    <dt class="col-6">
+                        Total Capacity
+                    </dt>
+
+                    <dd class="col-6 text-end">
+                        {{ trek.total_slots }}
+                    </dd>
+
+
+                    <dt class="col-6">
+                        Slots Remaining
+                    </dt>
+
+                    <dd class="col-6 text-end">
+                        {{ trek.available_slots }}
+                    </dd>
+
+                </dl>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+</div>
+
+{% endblock %}
