@@ -16,33 +16,47 @@
 
 <div class="alert alert-success">
     Welcome, {{ current_user.full_name }}.
-    Your staff account is approved.
+    Your Staff account is approved.
 </div>
 
+
 {% set summary_cards = [
-    ("Assigned Treks", "Live data in Milestone 8"),
-    ("Total Participants", "Live data in Milestone 8"),
-    ("Open Treks", "Live data in Milestone 8")
+    (
+        "Assigned Treks",
+        assigned_treks_count,
+        "Active non-completed assignments"
+    ),
+    (
+        "Open Treks",
+        open_treks_count,
+        "Currently available for booking"
+    ),
+    (
+        "Active Participants",
+        active_participants_count,
+        "Booked participant records"
+    )
 ] %}
+
 
 <div class="row g-3 mb-4">
 
-    {% for label, note in summary_cards %}
+    {% for label, value, description in summary_cards %}
 
         <div class="col-md-4">
             <div class="card border-0 shadow-sm metric-card">
                 <div class="card-body">
 
-                    <p class="text-secondary small mb-2">
+                    <p class="small text-secondary mb-2">
                         {{ label }}
                     </p>
 
                     <p class="metric-value mb-2">
-                        &mdash;
+                        {{ value }}
                     </p>
 
                     <p class="small text-secondary mb-0">
-                        {{ note }}
+                        {{ description }}
                     </p>
 
                 </div>
@@ -53,7 +67,9 @@
 
 </div>
 
+
 <div class="card border-0 shadow-sm">
+
     <div class="card-body">
 
         <div
@@ -63,12 +79,11 @@
         >
             <div>
                 <h2 class="h5 mb-1">
-                    My Assigned Treks
+                    Upcoming and Active Assignments
                 </h2>
 
                 <p class="small text-secondary mb-0">
-                    Only treks assigned by the administrator
-                    will appear here.
+                    Up to five assigned Treks are shown.
                 </p>
             </div>
 
@@ -76,22 +91,136 @@
                 href="{{ url_for('staff.my_treks') }}"
                 class="btn btn-outline-success"
             >
-                View My Treks
+                View All Assigned Treks
             </a>
         </div>
 
-        <div class="empty-state">
-            <p class="fw-semibold mb-1">
-                Assigned trek data is not connected yet
-            </p>
 
-            <p class="small text-secondary mb-0">
-                Staff trek management will be implemented
-                in Milestone 8.
-            </p>
-        </div>
+        {% if upcoming_treks %}
+
+            {% set status_styles = {
+                "Pending": "warning",
+                "Approved": "info",
+                "Open": "success",
+                "Closed": "secondary",
+                "Ongoing": "primary",
+                "Completed": "dark"
+            } %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Trek</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                            <th>Available Slots</th>
+                            <th>Participants</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for trek in upcoming_treks %}
+
+                            <tr>
+
+                                <td>
+                                    <span class="d-block fw-semibold">
+                                        #{{ trek.id }} — {{ trek.name }}
+                                    </span>
+
+                                    <span class="small text-secondary">
+                                        {{ trek.location }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{
+                                        trek.start_date
+                                        .strftime("%d %b %Y")
+                                    }}
+                                    to
+                                    {{
+                                        trek.end_date
+                                        .strftime("%d %b %Y")
+                                    }}
+                                </td>
+
+                                <td>
+                                    <span
+                                        class="badge text-bg-{{
+                                            status_styles.get(
+                                                trek.status,
+                                                'secondary'
+                                            )
+                                        }}"
+                                    >
+                                        {{ trek.status }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ trek.available_slots }}
+                                    / {{ trek.total_slots }}
+                                </td>
+
+                                <td>
+                                    {{
+                                        active_booking_counts.get(
+                                            trek.id,
+                                            0
+                                        )
+                                    }}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{{
+                                            url_for(
+                                                'staff.trek_detail',
+                                                trek_id=trek.id
+                                            )
+                                        }}"
+                                        class="btn btn-sm
+                                               btn-outline-primary"
+                                    >
+                                        Manage
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <p class="fw-semibold mb-1">
+                    No active Treks are assigned
+                </p>
+
+                <p class="small text-secondary mb-0">
+                    An Administrator must assign a Trek to your
+                    Staff account.
+                </p>
+
+            </div>
+
+        {% endif %}
 
     </div>
+
 </div>
 
 {% endblock %}

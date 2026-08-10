@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html>{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    My Assigned Treks | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Trek Staff Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    My Assigned Treks
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('staff.my_treks') }}"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-md-7">
+
+                <label
+                    for="q"
+                    class="form-label"
+                >
+                    Search Assigned Treks
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="Trek ID, name, or location"
+                >
+
+            </div>
+
+
+            <div class="col-md-3">
+
+                <label
+                    for="scope"
+                    class="form-label"
+                >
+                    Records
+                </label>
+
+                <select
+                    class="form-select"
+                    id="scope"
+                    name="scope"
+                >
+                    <option
+                        value="active"
+                        {% if scope == "active" %}selected{% endif %}
+                    >
+                        Active
+                    </option>
+
+                    <option
+                        value="completed"
+                        {% if scope == "completed" %}selected{% endif %}
+                    >
+                        Completed
+                    </option>
+
+                    <option
+                        value="all"
+                        {% if scope == "all" %}selected{% endif %}
+                    >
+                        All
+                    </option>
+                </select>
+
+            </div>
+
+
+            <div class="col-md-2">
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Search
+                    </button>
+
+                    <a
+                        href="{{ url_for('staff.my_treks') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-body">
+
+        <div class="mb-3">
+
+            <h2 class="h5 mb-1">
+                Assigned Trek Records
+            </h2>
+
+            <p class="small text-secondary mb-0">
+                {{ pagination.total }}
+                result{% if pagination.total != 1 %}s{% endif %}
+                found
+            </p>
+
+        </div>
+
+
+        {% if treks %}
+
+            {% set status_styles = {
+                "Pending": "warning",
+                "Approved": "info",
+                "Open": "success",
+                "Closed": "secondary",
+                "Ongoing": "primary",
+                "Completed": "dark"
+            } %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Trek</th>
+                            <th>Difficulty</th>
+                            <th>Dates</th>
+                            <th>Status</th>
+                            <th>Slots</th>
+                            <th>Participants</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for trek in treks %}
+
+                            <tr>
+
+                                <td>
+                                    <span class="d-block fw-semibold">
+                                        #{{ trek.id }} — {{ trek.name }}
+                                    </span>
+
+                                    <span class="small text-secondary">
+                                        {{ trek.location }}
+                                    </span>
+
+                                    {% if trek.is_archived %}
+                                        <span
+                                            class="badge
+                                                   text-bg-secondary
+                                                   d-block
+                                                   mt-1
+                                                   fit-content"
+                                        >
+                                            Archived
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ trek.difficulty }}
+                                </td>
+
+                                <td>
+                                    <span class="d-block">
+                                        {{
+                                            trek.start_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                    </span>
+
+                                    <span class="small text-secondary">
+                                        to
+                                        {{
+                                            trek.end_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span
+                                        class="badge text-bg-{{
+                                            status_styles.get(
+                                                trek.status,
+                                                'secondary'
+                                            )
+                                        }}"
+                                    >
+                                        {{ trek.status }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="d-block fw-semibold">
+                                        {{ trek.available_slots }}
+                                        available
+                                    </span>
+
+                                    <span class="small text-secondary">
+                                        {{ trek.total_slots }} total
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{
+                                        active_booking_counts.get(
+                                            trek.id,
+                                            0
+                                        )
+                                    }}
+                                </td>
+
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+
+                                        <a
+                                            href="{{
+                                                url_for(
+                                                    'staff.trek_detail',
+                                                    trek_id=trek.id
+                                                )
+                                            }}"
+                                            class="btn btn-sm
+                                                   btn-outline-primary"
+                                        >
+                                            View
+                                        </a>
+
+                                        <a
+                                            href="{{
+                                                url_for(
+                                                    'staff.trek_participants',
+                                                    trek_id=trek.id
+                                                )
+                                            }}"
+                                            class="btn btn-sm
+                                                   btn-outline-success"
+                                        >
+                                            Participants
+                                        </a>
+
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {% if pagination.pages > 1 %}
+
+                <nav
+                    aria-label="Assigned Trek pages"
+                    class="mt-4"
+                >
+
+                    <ul class="pagination justify-content-center mb-0">
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_prev %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'staff.my_treks',
+                                        page=pagination.prev_num,
+                                        q=search_text,
+                                        scope=scope
+                                    )
+                                    if pagination.has_prev
+                                    else '#'
+                                }}"
+                            >
+                                Previous
+                            </a>
+                        </li>
+
+
+                        {% for page_number in pagination.iter_pages() %}
+
+                            {% if page_number %}
+
+                                <li
+                                    class="page-item
+                                    {% if
+                                        page_number == pagination.page
+                                    %}
+                                        active
+                                    {% endif %}"
+                                >
+                                    <a
+                                        class="page-link"
+                                        href="{{
+                                            url_for(
+                                                'staff.my_treks',
+                                                page=page_number,
+                                                q=search_text,
+                                                scope=scope
+                                            )
+                                        }}"
+                                    >
+                                        {{ page_number }}
+                                    </a>
+                                </li>
+
+                            {% else %}
+
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_next %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'staff.my_treks',
+                                        page=pagination.next_num,
+                                        q=search_text,
+                                        scope=scope
+                                    )
+                                    if pagination.has_next
+                                    else '#'
+                                }}"
+                            >
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            {% endif %}
+
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <p class="fw-semibold mb-1">
+                    No assigned Treks match the current filters
+                </p>
+
+                <p class="small text-secondary mb-0">
+                    An Administrator must assign Treks to your
+                    Staff account.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    {{ page_title }} | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Trek Staff Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    {{ page_title }}
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="row justify-content-center">
+
+    <div class="col-xl-8">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body p-4 p-md-5">
+
+                <span class="badge text-bg-warning mb-3">
+                    Confirmation Required
+                </span>
+
+                {% if action_name == "start" %}
+
+                    <h2 class="h4">
+                        Start {{ trek.name }}?
+                    </h2>
+
+                    <p class="text-secondary">
+                        The Trek status will change from Open
+                        to Ongoing.
+                    </p>
+
+                    <div class="alert alert-info">
+                        Available slots will become zero and no
+                        additional bookings should be accepted.
+                    </div>
+
+                {% else %}
+
+                    <h2 class="h4">
+                        Complete {{ trek.name }}?
+                    </h2>
+
+                    <p class="text-secondary">
+                        The Trek status will change from Ongoing
+                        to Completed.
+                    </p>
+
+                    <div class="alert alert-info">
+                        {{ active_booking_count }}
+                        active booking record{% if active_booking_count != 1 %}s{% endif %}
+                        will also be changed to Completed.
+                    </div>
+
+                {% endif %}
+
+
+                <dl class="row mt-4">
+
+                    <dt class="col-sm-4">
+                        Trek ID
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        #{{ trek.id }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Location
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.location }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Current Status
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.status }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Active Participants
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ active_booking_count }}
+                    </dd>
+
+                </dl>
+
+
+                <div
+                    class="d-flex flex-column flex-sm-row
+                           justify-content-end gap-2 mt-4"
+                >
+
+                    <a
+                        href="{{
+                            url_for(
+                                'staff.trek_detail',
+                                trek_id=trek.id
+                            )
+                        }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancel
+                    </a>
+
+                    <form method="post" class="mb-0">
+
+                        <button
+                            type="submit"
+                            class="btn
+                            {% if action_name == 'start' %}
+                                btn-primary
+                            {% else %}
+                                btn-success
+                            {% endif %}"
+                        >
+                            {% if action_name == "start" %}
+                                Confirm Start
+                            {% else %}
+                                Confirm Completion
+                            {% endif %}
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
