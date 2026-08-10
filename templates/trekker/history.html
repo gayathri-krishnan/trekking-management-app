@@ -1,0 +1,470 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Trekking History | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Trekker Workspace
+{% endblock %}
+
+{% block dashboard_heading %}
+    Trekking History
+{% endblock %}
+
+{% block dashboard_content %}
+
+{% set summary_cards = [
+    (
+        "Completed Treks",
+        total_completed,
+        "Completed booking records"
+    ),
+    (
+        "Trekking Days",
+        total_days,
+        "Total planned duration"
+    ),
+    (
+        "Locations Visited",
+        unique_locations,
+        "Unique Trek locations"
+    )
+] %}
+
+<div class="row g-3 mb-4">
+
+    {% for label, value, description in summary_cards %}
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm metric-card">
+                <div class="card-body">
+
+                    <p class="small text-secondary mb-2">
+                        {{ label }}
+                    </p>
+
+                    <p class="metric-value mb-2">
+                        {{ value }}
+                    </p>
+
+                    <p class="small text-secondary mb-0">
+                        {{ description }}
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+    {% endfor %}
+
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('trekker.history') }}"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-md-5">
+
+                <label
+                    for="q"
+                    class="form-label"
+                >
+                    Search History
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="Booking ID, Trek ID, name, or location"
+                >
+
+            </div>
+
+
+            <div class="col-md-3">
+
+                <label
+                    for="difficulty"
+                    class="form-label"
+                >
+                    Difficulty
+                </label>
+
+                <select
+                    class="form-select"
+                    id="difficulty"
+                    name="difficulty"
+                >
+
+                    <option value="">
+                        All difficulties
+                    </option>
+
+                    {% for difficulty in difficulties %}
+
+                        <option
+                            value="{{ difficulty }}"
+                            {% if difficulty_filter == difficulty %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ difficulty }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-md-2">
+
+                <label
+                    for="year"
+                    class="form-label"
+                >
+                    Completion Year
+                </label>
+
+                <select
+                    class="form-select"
+                    id="year"
+                    name="year"
+                >
+
+                    <option value="">
+                        All years
+                    </option>
+
+                    {% for year in year_options %}
+
+                        <option
+                            value="{{ year }}"
+                            {% if year_filter == year %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ year }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-md-2">
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Apply
+                    </button>
+
+                    <a
+                        href="{{ url_for('trekker.history') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-body">
+
+        <div class="mb-3">
+
+            <h2 class="h5 mb-1">
+                Completed Trek Records
+            </h2>
+
+            <p class="small text-secondary mb-0">
+                {{ pagination.total }}
+                result{% if pagination.total != 1 %}s{% endif %}
+                found
+            </p>
+
+        </div>
+
+
+        {% if bookings %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Trek</th>
+                            <th>Difficulty</th>
+                            <th>Trek Dates</th>
+                            <th>Completed At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for booking in bookings %}
+
+                            <tr>
+
+                                <td>
+                                    #{{ booking.id }}
+                                </td>
+
+                                <td>
+                                    {% if booking.trek %}
+
+                                        <span class="d-block fw-semibold">
+                                            {{ booking.trek.name }}
+                                        </span>
+
+                                        <span class="small text-secondary">
+                                            #{{ booking.trek.id }}
+                                            ·
+                                            {{ booking.trek.location }}
+                                        </span>
+
+                                    {% else %}
+
+                                        Trek unavailable
+
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if booking.trek %}
+                                        {{ booking.trek.difficulty }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if booking.trek %}
+
+                                        {{
+                                            booking.trek.start_date
+                                            .strftime("%d %b %Y")
+                                        }}
+                                        to
+                                        {{
+                                            booking.trek.end_date
+                                            .strftime("%d %b %Y")
+                                        }}
+
+                                    {% else %}
+
+                                        —
+
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if booking.completed_at %}
+
+                                        {{
+                                            booking.completed_at
+                                            .strftime(
+                                                "%d %b %Y, %I:%M %p"
+                                            )
+                                        }}
+
+                                    {% else %}
+
+                                        <span class="text-secondary">
+                                            Not recorded
+                                        </span>
+
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{{
+                                            url_for(
+                                                'trekker.booking_detail',
+                                                booking_id=booking.id
+                                            )
+                                        }}"
+                                        class="btn btn-sm
+                                               btn-outline-primary"
+                                    >
+                                        View History
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {% if pagination.pages > 1 %}
+
+                <nav
+                    aria-label="Trekking history pages"
+                    class="mt-4"
+                >
+
+                    <ul class="pagination justify-content-center">
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_prev %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'trekker.history',
+                                        page=pagination.prev_num,
+                                        q=search_text,
+                                        difficulty=difficulty_filter,
+                                        year=year_filter
+                                    )
+                                    if pagination.has_prev
+                                    else '#'
+                                }}"
+                            >
+                                Previous
+                            </a>
+                        </li>
+
+
+                        {% for page_number in pagination.iter_pages() %}
+
+                            {% if page_number %}
+
+                                <li
+                                    class="page-item
+                                    {% if
+                                        page_number == pagination.page
+                                    %}
+                                        active
+                                    {% endif %}"
+                                >
+                                    <a
+                                        class="page-link"
+                                        href="{{
+                                            url_for(
+                                                'trekker.history',
+                                                page=page_number,
+                                                q=search_text,
+                                                difficulty=difficulty_filter,
+                                                year=year_filter
+                                            )
+                                        }}"
+                                    >
+                                        {{ page_number }}
+                                    </a>
+                                </li>
+
+                            {% else %}
+
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_next %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'trekker.history',
+                                        page=pagination.next_num,
+                                        q=search_text,
+                                        difficulty=difficulty_filter,
+                                        year=year_filter
+                                    )
+                                    if pagination.has_next
+                                    else '#'
+                                }}"
+                            >
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            {% endif %}
+
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <p class="fw-semibold mb-1">
+                    No completed Trek records found
+                </p>
+
+                <p class="small text-secondary mb-3">
+                    Completed Treks will appear here after the
+                    assigned Staff member finishes the Trek.
+                </p>
+
+                <a
+                    href="{{ url_for('trekker.my_bookings') }}"
+                    class="btn btn-outline-success"
+                >
+                    View My Bookings
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

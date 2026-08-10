@@ -892,6 +892,212 @@ def trek_participants(trek_id):
         )
     )
 
+@staff_bp.route("/history")
+@login_required
+@approved_staff_required
+def history():
+    """
+    Display completed Treks guided by the current Staff member.
+    """
+
+    search_text = request.args.get(
+        "q",
+        "",
+    ).strip()[:100]
+
+    difficulty_filter = request.args.get(
+        "difficulty",
+        "",
+    ).strip()
+
+    year_filter = request.args.get(
+        "year",
+        "",
+    ).strip()
+
+    if difficulty_filter not in {
+        "Easy",
+        "Moderate",
+        "Hard",
+    }:
+        difficulty_filter = ""
+
+    year_expression = func.strftime(
+        "%Y",
+        Trek.end_date,
+    )
+
+    year_options = db.session.execute(
+        db.select(
+            year_expression
+        )
+        .where(
+            Trek.assigned_staff_id == current_user.id,
+            Trek.status == "Completed",
+        )
+        .distinct()
+        .order_by(
+            year_expression.desc()
+        )
+    ).scalars().all()
+
+    year_options = [
+        year
+        for year in year_options
+        if year
+    ]
+
+    if year_filter not in year_options:
+        year_filter = ""
+
+    statement = db.select(Trek).where(
+        Trek.assigned_staff_id == current_user.id,
+        Trek.status == "Completed",
+    )
+
+    if search_text:
+        search_pattern = f"%{search_text}%"
+
+        conditions = [
+            Trek.name.ilike(search_pattern),
+            Trek.location.ilike(search_pattern),
+        ]
+
+        possible_id = search_text.removeprefix("#")
+
+        if possible_id.isdigit():
+            conditions.append(
+                Trek.id == int(possible_id)
+            )
+
+        statement = statement.where(
+            or_(*conditions)
+        )
+
+    if difficulty_filter:
+        statement = statement.where(
+            Trek.difficulty == difficulty_filter
+        )
+
+    if year_filter:
+        statement = statement.where(
+            year_expression == year_filter
+        )
+
+    statement = statement.order_by(
+        Trek.end_date.desc(),
+        Trek.id.desc(),
+    )
+
+    page_number = request.args.get(
+        "page",
+        1,
+        type=int,
+    )
+
+    if page_number is None or page_number < 1:
+        page_number = 1
+
+    pagination = db.paginate(
+        statement,
+        page=page_number,
+        per_page=10,
+        max_per_page=20,
+        error_out=False,
+    )
+
+    page_trek_ids = [
+        trek.id
+        for trek in pagination.items
+    ]
+
+    completed_participant_counts = {}
+
+    if page_trek_ids:
+        participant_rows = db.session.execute(
+            db.select(
+                Booking.trek_id,
+                func.count(Booking.id),
+            )
+            .where(
+                Booking.trek_id.in_(page_trek_ids),
+                Booking.status == "Completed",
+            )
+            .group_by(
+                Booking.trek_id
+            )
+        ).all()
+
+        completed_participant_counts = {
+            trek_id: count
+            for trek_id, count in participant_rows
+        }
+
+    total_completed_treks = (
+        db.session.scalar(
+            db.select(
+                func.count(Trek.id)
+            ).where(
+                Trek.assigned_staff_id == current_user.id,
+                Trek.status == "Completed",
+            )
+        )
+        or 0
+    )
+
+    total_guided_days = (
+        db.session.scalar(
+            db.select(
+                func.sum(Trek.duration_days)
+            ).where(
+                Trek.assigned_staff_id == current_user.id,
+                Trek.status == "Completed",
+            )
+        )
+        or 0
+    )
+
+    total_completed_participants = (
+        db.session.scalar(
+            db.select(
+                func.count(Booking.id)
+            )
+            .join(
+                Trek,
+                Booking.trek_id == Trek.id,
+            )
+            .where(
+                Trek.assigned_staff_id == current_user.id,
+                Trek.status == "Completed",
+                Booking.status == "Completed",
+            )
+        )
+        or 0
+    )
+
+    return render_template(
+        "staff/history.html",
+        active_page="history",
+        treks=pagination.items,
+        pagination=pagination,
+        completed_participant_counts=(
+            completed_participant_counts
+        ),
+        total_completed_treks=total_completed_treks,
+        total_guided_days=total_guided_days,
+        total_completed_participants=(
+            total_completed_participants
+        ),
+        search_text=search_text,
+        difficulty_filter=difficulty_filter,
+        year_filter=year_filter,
+        difficulties=(
+            "Easy",
+            "Moderate",
+            "Hard",
+        ),
+        year_options=year_options,
+    )
 
 @staff_bp.route("/profile")
 @login_required

@@ -64,6 +64,17 @@
 
     <a
         class="nav-link dashboard-nav-link
+               {% if active_page == 'history' %}active{% endif %}"
+        href="{{ url_for('admin.history') }}"
+        {% if active_page == "history" %}
+            aria-current="page"
+        {% endif %}
+    >
+        History
+    </a>
+
+    <a
+        class="nav-link dashboard-nav-link
                {% if active_page == 'search' %}active{% endif %}"
         href="{{ url_for('admin.search') }}"
         {% if active_page == "search" %}

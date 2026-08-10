@@ -40,6 +40,18 @@ TREK_STATUSES = (
     "Ongoing",
     "Completed",
 )
+ADMIN_EDITABLE_TREK_STATUSES = (
+    "Pending",
+    "Approved",
+    "Open",
+    "Closed",
+)
+
+HISTORY_ARCHIVE_FILTERS = (
+    "all",
+    "active",
+    "archived",
+)
 
 TREK_SCOPES = (
     "active",
@@ -240,6 +252,49 @@ def _form_data_for_trek(trek=None):
         "description": trek.description,
     }
 
+def _admin_status_options_for_trek(trek=None):
+    """
+    Return Trek statuses that Admin may select in the
+    normal create or edit form.
+
+    Starting and completing Treks are Staff lifecycle actions.
+    """
+
+    if trek is None:
+        return ADMIN_EDITABLE_TREK_STATUSES
+
+    transitions = {
+        "Pending": (
+            "Pending",
+            "Approved",
+            "Closed",
+        ),
+        "Approved": (
+            "Approved",
+            "Open",
+            "Closed",
+        ),
+        "Open": (
+            "Open",
+            "Closed",
+        ),
+        "Closed": (
+            "Closed",
+            "Approved",
+            "Open",
+        ),
+        "Ongoing": (
+            "Ongoing",
+        ),
+        "Completed": (
+            "Completed",
+        ),
+    }
+
+    return transitions.get(
+        trek.status,
+        (trek.status,),
+    )
 
 def _validate_trek_form(existing_trek=None):
 
@@ -285,9 +340,14 @@ def _validate_trek_form(existing_trek=None):
             "Choose a valid difficulty."
         )
 
-    if status not in TREK_STATUSES:
+    allowed_statuses = _admin_status_options_for_trek(
+        existing_trek
+    )
+
+    if status not in allowed_statuses:
         errors.append(
-            "Choose a valid trek status."
+            "That Trek status change is not allowed through "
+            "the Admin form."
         )
 
     if len(description) > 2000:
@@ -467,7 +527,9 @@ def _render_trek_form(
         errors=errors or [],
         form_data=_form_data_for_trek(trek),
         difficulties=TREK_DIFFICULTIES,
-        statuses=TREK_STATUSES,
+        statuses=_admin_status_options_for_trek(
+            trek
+        ),
         staff_options=_staff_options(
             current_staff_id
         ),
@@ -723,6 +785,32 @@ def edit_trek(trek_id):
             )
         )
 
+    if trek.status in {
+        "Ongoing",
+        "Completed",
+    }:
+        flash(
+            "Ongoing and Completed Treks cannot be edited through "
+            "the standard Admin form. Lifecycle changes must be "
+            "performed by the assigned Staff member.",
+            "warning",
+        )
+
+        if trek.status == "Completed":
+            return redirect(
+                url_for(
+                    "admin.history_trek_detail",
+                    trek_id=trek.id,
+                )
+            )
+
+        return redirect(
+            url_for(
+                "admin.manage_treks",
+                q=trek.id,
+                scope="all",
+            )
+        )
     if request.method == "POST":
         validated_data, errors = (
             _validate_trek_form(
@@ -1002,6 +1090,38 @@ def _booking_counts_for_user(
         counts["Total"] += count
 
     return counts
+
+def _booking_counts_for_trek(trek_id: int):
+    """
+    Return Booking counts grouped by status for one Trek.
+    """
+
+    counts = {
+        "Booked": 0,
+        "Cancelled": 0,
+        "Completed": 0,
+        "Total": 0,
+    }
+
+    rows = db.session.execute(
+        db.select(
+            Booking.status,
+            func.count(Booking.id),
+        )
+        .where(
+            Booking.trek_id == trek_id
+        )
+        .group_by(
+            Booking.status
+        )
+    ).all()
+
+    for status, count in rows:
+        counts[status] = count
+        counts["Total"] += count
+
+    return counts
+
 def _all_booking_counts():
 
     counts = {
@@ -1963,6 +2083,348 @@ def booking_detail(booking_id):
         active_page="bookings",
         booking=booking,
         events=events,
+    )
+@admin_bp.route("/history")
+@login_required
+@role_required("admin")
+def history():
+    """
+    Display completed Trek and participant history across the
+    complete application.
+    """
+
+    search_text = request.args.get(
+        "q",
+        "",
+    ).strip()[:100]
+
+    difficulty_filter = request.args.get(
+        "difficulty",
+        "",
+    ).strip()
+
+    location_filter = request.args.get(
+        "location",
+        "",
+    ).strip()
+
+    year_filter = request.args.get(
+        "year",
+        "",
+    ).strip()
+
+    archive_filter = request.args.get(
+        "archive",
+        "all",
+    ).strip().lower()
+
+    if difficulty_filter not in TREK_DIFFICULTIES:
+        difficulty_filter = ""
+
+    if archive_filter not in HISTORY_ARCHIVE_FILTERS:
+        archive_filter = "all"
+
+    location_options = db.session.execute(
+        db.select(
+            Trek.location
+        )
+        .where(
+            Trek.status == "Completed"
+        )
+        .distinct()
+        .order_by(
+            Trek.location.asc()
+        )
+    ).scalars().all()
+
+    if location_filter not in location_options:
+        location_filter = ""
+
+    year_expression = func.strftime(
+        "%Y",
+        Trek.end_date,
+    )
+
+    year_options = db.session.execute(
+        db.select(
+            year_expression
+        )
+        .where(
+            Trek.status == "Completed"
+        )
+        .distinct()
+        .order_by(
+            year_expression.desc()
+        )
+    ).scalars().all()
+
+    year_options = [
+        year
+        for year in year_options
+        if year
+    ]
+
+    if year_filter not in year_options:
+        year_filter = ""
+
+    statement = (
+        db.select(Trek)
+        .outerjoin(
+            User,
+            Trek.assigned_staff_id == User.id,
+        )
+        .where(
+            Trek.status == "Completed"
+        )
+        .options(
+            joinedload(Trek.assigned_staff)
+        )
+    )
+
+    if search_text:
+        search_pattern = f"%{search_text}%"
+
+        conditions = [
+            Trek.name.ilike(search_pattern),
+            Trek.location.ilike(search_pattern),
+            User.full_name.ilike(search_pattern),
+            User.email.ilike(search_pattern),
+        ]
+
+        possible_id = search_text.removeprefix("#")
+
+        if possible_id.isdigit():
+            numeric_id = int(
+                possible_id
+            )
+
+            conditions.extend(
+                [
+                    Trek.id == numeric_id,
+                    User.id == numeric_id,
+                ]
+            )
+
+        statement = statement.where(
+            or_(*conditions)
+        )
+
+    if difficulty_filter:
+        statement = statement.where(
+            Trek.difficulty == difficulty_filter
+        )
+
+    if location_filter:
+        statement = statement.where(
+            Trek.location == location_filter
+        )
+
+    if year_filter:
+        statement = statement.where(
+            year_expression == year_filter
+        )
+
+    if archive_filter == "active":
+        statement = statement.where(
+            Trek.is_archived.is_(False)
+        )
+
+    elif archive_filter == "archived":
+        statement = statement.where(
+            Trek.is_archived.is_(True)
+        )
+
+    statement = statement.order_by(
+        Trek.end_date.desc(),
+        Trek.id.desc(),
+    )
+
+    page_number = request.args.get(
+        "page",
+        1,
+        type=int,
+    )
+
+    if page_number is None or page_number < 1:
+        page_number = 1
+
+    pagination = db.paginate(
+        statement,
+        page=page_number,
+        per_page=10,
+        max_per_page=20,
+        error_out=False,
+    )
+
+    page_trek_ids = [
+        trek.id
+        for trek in pagination.items
+    ]
+
+    booking_counts_by_trek = {
+        trek_id: {
+            "Booked": 0,
+            "Cancelled": 0,
+            "Completed": 0,
+            "Total": 0,
+        }
+        for trek_id in page_trek_ids
+    }
+
+    if page_trek_ids:
+        count_rows = db.session.execute(
+            db.select(
+                Booking.trek_id,
+                Booking.status,
+                func.count(Booking.id),
+            )
+            .where(
+                Booking.trek_id.in_(page_trek_ids)
+            )
+            .group_by(
+                Booking.trek_id,
+                Booking.status,
+            )
+        ).all()
+
+        for trek_id, status, count in count_rows:
+            booking_counts_by_trek[trek_id][status] = count
+            booking_counts_by_trek[trek_id]["Total"] += count
+
+    total_completed_treks = (
+        db.session.scalar(
+            db.select(
+                func.count(Trek.id)
+            ).where(
+                Trek.status == "Completed"
+            )
+        )
+        or 0
+    )
+
+    total_completed_bookings = (
+        db.session.scalar(
+            db.select(
+                func.count(Booking.id)
+            )
+            .join(
+                Trek,
+                Booking.trek_id == Trek.id,
+            )
+            .where(
+                Trek.status == "Completed",
+                Booking.status == "Completed",
+            )
+        )
+        or 0
+    )
+
+    total_cancelled_bookings = (
+        db.session.scalar(
+            db.select(
+                func.count(Booking.id)
+            )
+            .join(
+                Trek,
+                Booking.trek_id == Trek.id,
+            )
+            .where(
+                Trek.status == "Completed",
+                Booking.status == "Cancelled",
+            )
+        )
+        or 0
+    )
+
+    total_trek_days = (
+        db.session.scalar(
+            db.select(
+                func.sum(Trek.duration_days)
+            ).where(
+                Trek.status == "Completed"
+            )
+        )
+        or 0
+    )
+
+    return render_template(
+        "admin/history/list.html",
+        active_page="history",
+        treks=pagination.items,
+        pagination=pagination,
+        booking_counts_by_trek=booking_counts_by_trek,
+        total_completed_treks=total_completed_treks,
+        total_completed_bookings=(
+            total_completed_bookings
+        ),
+        total_cancelled_bookings=(
+            total_cancelled_bookings
+        ),
+        total_trek_days=total_trek_days,
+        search_text=search_text,
+        difficulty_filter=difficulty_filter,
+        location_filter=location_filter,
+        year_filter=year_filter,
+        archive_filter=archive_filter,
+        difficulties=TREK_DIFFICULTIES,
+        location_options=location_options,
+        year_options=year_options,
+    )
+
+
+@admin_bp.route(
+    "/history/treks/<int:trek_id>"
+)
+@login_required
+@role_required("admin")
+def history_trek_detail(trek_id):
+    """
+    Display one completed Trek and all associated Booking
+    records.
+    """
+
+    trek = db.session.scalar(
+        db.select(Trek)
+        .where(
+            Trek.id == trek_id,
+            Trek.status == "Completed",
+        )
+        .options(
+            joinedload(Trek.assigned_staff)
+        )
+    )
+
+    if trek is None:
+        abort(
+            404,
+            description=(
+                "The requested completed Trek record does "
+                "not exist."
+            ),
+        )
+
+    bookings = db.session.execute(
+        db.select(Booking)
+        .where(
+            Booking.trek_id == trek.id
+        )
+        .options(
+            joinedload(Booking.trekker)
+        )
+        .order_by(
+            Booking.status.asc(),
+            Booking.id.asc(),
+        )
+    ).scalars().all()
+
+    return render_template(
+        "admin/history/detail.html",
+        active_page="history",
+        trek=trek,
+        bookings=bookings,
+        booking_counts=_booking_counts_for_trek(
+            trek.id
+        ),
     )
 
 @admin_bp.route("/search")

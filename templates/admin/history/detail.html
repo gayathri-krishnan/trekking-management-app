@@ -1,0 +1,363 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Completed Trek History | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    Completed Trek History
+{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="mb-4">
+
+    <a
+        href="{{ url_for('admin.history') }}"
+        class="btn btn-outline-secondary"
+    >
+        Back to History
+    </a>
+
+</div>
+
+
+{% if booking_counts["Booked"] > 0 %}
+
+    <div class="alert alert-danger">
+
+        This Completed Trek still contains
+        <strong>{{ booking_counts["Booked"] }}</strong>
+        Booked record{% if booking_counts["Booked"] != 1 %}s{% endif %}.
+
+        This is inconsistent with the normal lifecycle and may
+        represent older test data created before the completion
+        workflow was implemented.
+
+    </div>
+
+{% endif %}
+
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-7">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body">
+
+                <h2 class="h4 mb-3">
+                    #{{ trek.id }} — {{ trek.name }}
+                </h2>
+
+                <dl class="row mb-0">
+
+                    <dt class="col-sm-4">
+                        Location
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.location }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Difficulty
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.difficulty }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Dates
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{
+                            trek.start_date
+                            .strftime("%d %b %Y")
+                        }}
+                        to
+                        {{
+                            trek.end_date
+                            .strftime("%d %b %Y")
+                        }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Duration
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.duration_days }}
+                        day{% if trek.duration_days != 1 %}s{% endif %}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Capacity
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {{ trek.total_slots }}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Record Type
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {% if trek.is_archived %}
+                            Archived
+                        {% else %}
+                            Non-archived
+                        {% endif %}
+                    </dd>
+
+
+                    <dt class="col-sm-4">
+                        Assigned Guide
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        {% if trek.assigned_staff %}
+
+                            {{ trek.assigned_staff.full_name }}
+                            — Staff #{{ trek.assigned_staff.id }}
+
+                        {% else %}
+
+                            Unassigned
+
+                        {% endif %}
+                    </dd>
+
+                </dl>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-5">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body">
+
+                <h2 class="h5 mb-3">
+                    Booking Summary
+                </h2>
+
+                <div class="row g-3">
+
+                    {% for status in
+                        ["Completed", "Cancelled", "Booked"]
+                    %}
+
+                        <div class="col-4">
+
+                            <div
+                                class="p-3 bg-light rounded
+                                       text-center h-100"
+                            >
+
+                                <p class="small text-secondary mb-1">
+                                    {{ status }}
+                                </p>
+
+                                <p class="h3 mb-0">
+                                    {{ booking_counts[status] }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <p class="mt-3 mb-0">
+
+                    Total Booking records:
+
+                    <strong>
+                        {{ booking_counts["Total"] }}
+                    </strong>
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-body">
+
+        <h2 class="h5 mb-3">
+            Participant and Booking History
+        </h2>
+
+
+        {% if bookings %}
+
+            {% set status_styles = {
+                "Completed": "primary",
+                "Cancelled": "secondary",
+                "Booked": "danger"
+            } %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Trekker</th>
+                            <th>Status</th>
+                            <th>Booking Date</th>
+                            <th>Final Event Time</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for booking in bookings %}
+
+                            <tr>
+
+                                <td>
+                                    #{{ booking.id }}
+                                </td>
+
+                                <td>
+                                    {% if booking.trekker %}
+
+                                        <span class="d-block fw-semibold">
+                                            {{ booking.trekker.full_name }}
+                                        </span>
+
+                                        <span class="small text-secondary">
+                                            #{{ booking.trekker.id }}
+                                            ·
+                                            {{ booking.trekker.email }}
+                                        </span>
+
+                                    {% else %}
+
+                                        User unavailable
+
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <span
+                                        class="badge text-bg-{{
+                                            status_styles.get(
+                                                booking.status,
+                                                'dark'
+                                            )
+                                        }}"
+                                    >
+                                        {{ booking.status }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{
+                                        booking.booking_date
+                                        .strftime(
+                                            "%d %b %Y, %I:%M %p"
+                                        )
+                                    }}
+                                </td>
+
+                                <td>
+                                    {% if booking.completed_at %}
+
+                                        {{
+                                            booking.completed_at
+                                            .strftime(
+                                                "%d %b %Y, %I:%M %p"
+                                            )
+                                        }}
+
+                                    {% elif booking.cancelled_at %}
+
+                                        {{
+                                            booking.cancelled_at
+                                            .strftime(
+                                                "%d %b %Y, %I:%M %p"
+                                            )
+                                        }}
+
+                                    {% else %}
+
+                                        —
+
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{{
+                                            url_for(
+                                                'admin.booking_detail',
+                                                booking_id=booking.id
+                                            )
+                                        }}"
+                                        class="btn btn-sm
+                                               btn-outline-primary"
+                                    >
+                                        Event History
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <p class="mb-0">
+                    No Booking records exist for this completed Trek.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

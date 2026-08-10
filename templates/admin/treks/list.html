@@ -454,33 +454,80 @@
 
                                         {% if not trek.is_archived %}
 
-                                            <a
-                                                href="{{
-                                                    url_for(
-                                                        'admin.edit_trek',
-                                                        trek_id=trek.id
-                                                    )
-                                                }}"
-                                                class="btn btn-sm
-                                                       btn-outline-primary"
-                                            >
-                                                Edit
-                                            </a>
+                                            {% if trek.status not in ["Ongoing", "Completed"] %}
 
-                                            <a
-                                                href="{{
-                                                    url_for(
-                                                        'admin.archive_trek',
-                                                        trek_id=trek.id
-                                                    )
-                                                }}"
-                                                class="btn btn-sm
-                                                       btn-outline-danger"
-                                            >
-                                                Archive
-                                            </a>
+                                                <a
+                                                    href="{{
+                                                        url_for(
+                                                            'admin.edit_trek',
+                                                            trek_id=trek.id
+                                                        )
+                                                    }}"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                >
+                                                    Edit
+                                                </a>
+
+                                            {% endif %}
+
+
+                                            {% if trek.status == "Completed" %}
+
+                                                <a
+                                                    href="{{
+                                                        url_for(
+                                                            'admin.history_trek_detail',
+                                                            trek_id=trek.id
+                                                        )
+                                                    }}"
+                                                    class="btn btn-sm btn-outline-success"
+                                                >
+                                                    History
+                                                </a>
+
+                                            {% endif %}
+
+
+                                            {% if trek.status != "Ongoing" %}
+
+                                                <a
+                                                    href="{{
+                                                        url_for(
+                                                            'admin.archive_trek',
+                                                            trek_id=trek.id
+                                                        )
+                                                    }}"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                >
+                                                    Archive
+                                                </a>
+
+                                            {% else %}
+
+                                                <span class="badge text-bg-primary">
+                                                    Managed by Staff
+                                                </span>
+
+                                            {% endif %}
+
 
                                         {% else %}
+
+                                            {% if trek.status == "Completed" %}
+
+                                                <a
+                                                    href="{{
+                                                        url_for(
+                                                            'admin.history_trek_detail',
+                                                            trek_id=trek.id
+                                                        )
+                                                    }}"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                >
+                                                    History
+                                                </a>
+
+                                            {% endif %}
 
                                             <form
                                                 method="post"
@@ -494,8 +541,7 @@
                                             >
                                                 <button
                                                     type="submit"
-                                                    class="btn btn-sm
-                                                           btn-outline-success"
+                                                    class="btn btn-sm btn-outline-success"
                                                 >
                                                     Restore
                                                 </button>

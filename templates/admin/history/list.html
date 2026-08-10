@@ -1,0 +1,581 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}
+    Trekking History | Trekking Management
+{% endblock %}
+
+{% block dashboard_eyebrow %}
+    Administration
+{% endblock %}
+
+{% block dashboard_heading %}
+    Trekking History
+{% endblock %}
+
+{% block dashboard_content %}
+
+{% set summary_cards = [
+    (
+        "Completed Treks",
+        total_completed_treks,
+        "All completed Trek records"
+    ),
+    (
+        "Completed Bookings",
+        total_completed_bookings,
+        "Participants marked Completed"
+    ),
+    (
+        "Cancelled Bookings",
+        total_cancelled_bookings,
+        "Cancellations on completed Treks"
+    ),
+    (
+        "Total Trek Days",
+        total_trek_days,
+        "Combined planned duration"
+    )
+] %}
+
+<div class="row g-3 mb-4">
+
+    {% for label, value, description in summary_cards %}
+
+        <div class="col-sm-6 col-xl-3">
+
+            <div class="card border-0 shadow-sm metric-card">
+
+                <div class="card-body">
+
+                    <p class="small text-secondary mb-2">
+                        {{ label }}
+                    </p>
+
+                    <p class="metric-value mb-2">
+                        {{ value }}
+                    </p>
+
+                    <p class="small text-secondary mb-0">
+                        {{ description }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body">
+
+        <form
+            method="get"
+            action="{{ url_for('admin.history') }}"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-lg-4">
+
+                <label
+                    for="q"
+                    class="form-label"
+                >
+                    Search History
+                </label>
+
+                <input
+                    type="search"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    maxlength="100"
+                    value="{{ search_text }}"
+                    placeholder="Trek, location, guide, or ID"
+                >
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="difficulty"
+                    class="form-label"
+                >
+                    Difficulty
+                </label>
+
+                <select
+                    class="form-select"
+                    id="difficulty"
+                    name="difficulty"
+                >
+
+                    <option value="">
+                        All difficulties
+                    </option>
+
+                    {% for difficulty in difficulties %}
+
+                        <option
+                            value="{{ difficulty }}"
+                            {% if difficulty_filter == difficulty %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ difficulty }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="location"
+                    class="form-label"
+                >
+                    Location
+                </label>
+
+                <select
+                    class="form-select"
+                    id="location"
+                    name="location"
+                >
+
+                    <option value="">
+                        All locations
+                    </option>
+
+                    {% for location in location_options %}
+
+                        <option
+                            value="{{ location }}"
+                            {% if location_filter == location %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ location }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="year"
+                    class="form-label"
+                >
+                    Year
+                </label>
+
+                <select
+                    class="form-select"
+                    id="year"
+                    name="year"
+                >
+
+                    <option value="">
+                        All years
+                    </option>
+
+                    {% for year in year_options %}
+
+                        <option
+                            value="{{ year }}"
+                            {% if year_filter == year %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ year }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="col-sm-6 col-lg-2">
+
+                <label
+                    for="archive"
+                    class="form-label"
+                >
+                    Record Type
+                </label>
+
+                <select
+                    class="form-select"
+                    id="archive"
+                    name="archive"
+                >
+
+                    <option
+                        value="all"
+                        {% if archive_filter == "all" %}
+                            selected
+                        {% endif %}
+                    >
+                        All
+                    </option>
+
+                    <option
+                        value="active"
+                        {% if archive_filter == "active" %}
+                            selected
+                        {% endif %}
+                    >
+                        Non-archived
+                    </option>
+
+                    <option
+                        value="archived"
+                        {% if archive_filter == "archived" %}
+                            selected
+                        {% endif %}
+                    >
+                        Archived
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="col-12">
+
+                <div
+                    class="d-flex flex-column flex-sm-row
+                           justify-content-end gap-2"
+                >
+
+                    <a
+                        href="{{ url_for('admin.history') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Clear
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Apply Filters
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-body">
+
+        <div class="mb-3">
+
+            <h2 class="h5 mb-1">
+                Completed Trek Records
+            </h2>
+
+            <p class="small text-secondary mb-0">
+                {{ pagination.total }}
+                result{% if pagination.total != 1 %}s{% endif %}
+                found
+            </p>
+
+        </div>
+
+
+        {% if treks %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Trek</th>
+                            <th>Guide</th>
+                            <th>Dates</th>
+                            <th>Completed</th>
+                            <th>Cancelled</th>
+                            <th>Record Type</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for trek in treks %}
+
+                            {% set counts =
+                                booking_counts_by_trek[trek.id]
+                            %}
+
+                            <tr>
+
+                                <td>
+                                    <span class="d-block fw-semibold">
+                                        #{{ trek.id }} — {{ trek.name }}
+                                    </span>
+
+                                    <span class="small text-secondary">
+                                        {{ trek.location }}
+                                        ·
+                                        {{ trek.difficulty }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {% if trek.assigned_staff %}
+
+                                        <span class="d-block fw-semibold">
+                                            {{
+                                                trek.assigned_staff
+                                                .full_name
+                                            }}
+                                        </span>
+
+                                        <span class="small text-secondary">
+                                            Staff ID:
+                                            {{ trek.assigned_staff.id }}
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="text-secondary">
+                                            Unassigned
+                                        </span>
+
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{
+                                        trek.start_date
+                                        .strftime("%d %b %Y")
+                                    }}
+                                    to
+                                    {{
+                                        trek.end_date
+                                        .strftime("%d %b %Y")
+                                    }}
+                                </td>
+
+                                <td>
+                                    {{ counts["Completed"] }}
+                                </td>
+
+                                <td>
+                                    {{ counts["Cancelled"] }}
+                                </td>
+
+                                <td>
+                                    {% if trek.is_archived %}
+
+                                        <span class="badge text-bg-secondary">
+                                            Archived
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge text-bg-success">
+                                            Non-archived
+                                        </span>
+
+                                    {% endif %}
+
+                                    {% if counts["Booked"] > 0 %}
+
+                                        <span
+                                            class="badge text-bg-danger
+                                                   d-block mt-1"
+                                        >
+                                            Inconsistent Bookings
+                                        </span>
+
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{{
+                                            url_for(
+                                                'admin.history_trek_detail',
+                                                trek_id=trek.id
+                                            )
+                                        }}"
+                                        class="btn btn-sm
+                                               btn-outline-primary"
+                                    >
+                                        View History
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {% if pagination.pages > 1 %}
+
+                <nav
+                    aria-label="Admin history pages"
+                    class="mt-4"
+                >
+
+                    <ul class="pagination justify-content-center">
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_prev %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'admin.history',
+                                        page=pagination.prev_num,
+                                        q=search_text,
+                                        difficulty=difficulty_filter,
+                                        location=location_filter,
+                                        year=year_filter,
+                                        archive=archive_filter
+                                    )
+                                    if pagination.has_prev
+                                    else '#'
+                                }}"
+                            >
+                                Previous
+                            </a>
+                        </li>
+
+
+                        {% for page_number in pagination.iter_pages() %}
+
+                            {% if page_number %}
+
+                                <li
+                                    class="page-item
+                                    {% if
+                                        page_number == pagination.page
+                                    %}
+                                        active
+                                    {% endif %}"
+                                >
+                                    <a
+                                        class="page-link"
+                                        href="{{
+                                            url_for(
+                                                'admin.history',
+                                                page=page_number,
+                                                q=search_text,
+                                                difficulty=difficulty_filter,
+                                                location=location_filter,
+                                                year=year_filter,
+                                                archive=archive_filter
+                                            )
+                                        }}"
+                                    >
+                                        {{ page_number }}
+                                    </a>
+                                </li>
+
+                            {% else %}
+
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+
+                        <li
+                            class="page-item
+                            {% if not pagination.has_next %}
+                                disabled
+                            {% endif %}"
+                        >
+                            <a
+                                class="page-link"
+                                href="{{
+                                    url_for(
+                                        'admin.history',
+                                        page=pagination.next_num,
+                                        q=search_text,
+                                        difficulty=difficulty_filter,
+                                        location=location_filter,
+                                        year=year_filter,
+                                        archive=archive_filter
+                                    )
+                                    if pagination.has_next
+                                    else '#'
+                                }}"
+                            >
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+            {% endif %}
+
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <p class="fw-semibold mb-1">
+                    No completed Trek records found
+                </p>
+
+                <p class="small text-secondary mb-0">
+                    Change the filters or complete an Ongoing Trek.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

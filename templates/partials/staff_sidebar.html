@@ -39,6 +39,16 @@
     >
         Participants
     </a>
+    <a
+        class="nav-link dashboard-nav-link
+               {% if active_page == 'history' %}active{% endif %}"
+        href="{{ url_for('staff.history') }}"
+        {% if active_page == "history" %}
+            aria-current="page"
+        {% endif %}
+    >
+        History
+    </a>
 
     <a
         class="nav-link dashboard-nav-link

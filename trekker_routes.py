@@ -1000,14 +1000,198 @@ def cancel_booking(booking_id):
 @login_required
 @role_required("trekker")
 def history():
-    return _render_placeholder(
-        page_title="Trekking History",
-        description=(
-            "View completed and historical Trek activity for "
-            "the current Trekker."
-        ),
+    """
+    Display completed Trek history for the current Trekker.
+    """
+
+    search_text = request.args.get(
+        "q",
+        "",
+    ).strip()[:100]
+
+    difficulty_filter = request.args.get(
+        "difficulty",
+        "",
+    ).strip()
+
+    year_filter = request.args.get(
+        "year",
+        "",
+    ).strip()
+
+    if difficulty_filter not in TREK_DIFFICULTIES:
+        difficulty_filter = ""
+
+    year_expression = func.strftime(
+        "%Y",
+        Trek.end_date,
+    )
+
+    year_options = db.session.execute(
+        db.select(
+            year_expression
+        )
+        .select_from(Booking)
+        .join(
+            Trek,
+            Booking.trek_id == Trek.id,
+        )
+        .where(
+            Booking.user_id == current_user.id,
+            Booking.status == "Completed",
+        )
+        .distinct()
+        .order_by(
+            year_expression.desc()
+        )
+    ).scalars().all()
+
+    year_options = [
+        year
+        for year in year_options
+        if year
+    ]
+
+    if year_filter not in year_options:
+        year_filter = ""
+
+    statement = (
+        db.select(Booking)
+        .join(
+            Trek,
+            Booking.trek_id == Trek.id,
+        )
+        .where(
+            Booking.user_id == current_user.id,
+            Booking.status == "Completed",
+        )
+        .options(
+            joinedload(Booking.trek)
+        )
+    )
+
+    if search_text:
+        search_pattern = f"%{search_text}%"
+
+        conditions = [
+            Trek.name.ilike(search_pattern),
+            Trek.location.ilike(search_pattern),
+        ]
+
+        possible_id = search_text.removeprefix("#")
+
+        if possible_id.isdigit():
+            numeric_id = int(
+                possible_id
+            )
+
+            conditions.extend(
+                [
+                    Booking.id == numeric_id,
+                    Trek.id == numeric_id,
+                ]
+            )
+
+        statement = statement.where(
+            or_(*conditions)
+        )
+
+    if difficulty_filter:
+        statement = statement.where(
+            Trek.difficulty == difficulty_filter
+        )
+
+    if year_filter:
+        statement = statement.where(
+            year_expression == year_filter
+        )
+
+    statement = statement.order_by(
+        Trek.end_date.desc(),
+        Booking.completed_at.desc(),
+        Booking.id.desc(),
+    )
+
+    page_number = request.args.get(
+        "page",
+        1,
+        type=int,
+    )
+
+    if page_number is None or page_number < 1:
+        page_number = 1
+
+    pagination = db.paginate(
+        statement,
+        page=page_number,
+        per_page=10,
+        max_per_page=20,
+        error_out=False,
+    )
+
+    total_completed = (
+        db.session.scalar(
+            db.select(
+                func.count(Booking.id)
+            ).where(
+                Booking.user_id == current_user.id,
+                Booking.status == "Completed",
+            )
+        )
+        or 0
+    )
+
+    total_days = (
+        db.session.scalar(
+            db.select(
+                func.sum(Trek.duration_days)
+            )
+            .select_from(Booking)
+            .join(
+                Trek,
+                Booking.trek_id == Trek.id,
+            )
+            .where(
+                Booking.user_id == current_user.id,
+                Booking.status == "Completed",
+            )
+        )
+        or 0
+    )
+
+    unique_locations = (
+        db.session.scalar(
+            db.select(
+                func.count(
+                    func.distinct(Trek.location)
+                )
+            )
+            .select_from(Booking)
+            .join(
+                Trek,
+                Booking.trek_id == Trek.id,
+            )
+            .where(
+                Booking.user_id == current_user.id,
+                Booking.status == "Completed",
+            )
+        )
+        or 0
+    )
+
+    return render_template(
+        "trekker/history.html",
         active_page="history",
-        planned_milestone="Milestone 11",
+        bookings=pagination.items,
+        pagination=pagination,
+        total_completed=total_completed,
+        total_days=total_days,
+        unique_locations=unique_locations,
+        search_text=search_text,
+        difficulty_filter=difficulty_filter,
+        year_filter=year_filter,
+        difficulties=TREK_DIFFICULTIES,
+        year_options=year_options,
     )
 
 
