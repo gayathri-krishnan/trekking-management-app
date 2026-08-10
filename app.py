@@ -40,7 +40,7 @@ def load_user(user_id: str):
     return user
 
 
-def create_app():
+def create_app(test_config=None):
     """Create and configure the Flask application."""
 
     app = Flask(
@@ -53,6 +53,7 @@ def create_app():
             "SECRET_KEY",
             "development-key-change-before-final-submission",
         ),
+        SEED_DEFAULT_ADMIN=True,
         SQLALCHEMY_DATABASE_URI="sqlite:///trekking.db",
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         ADMIN_EMAIL=os.environ.get(
@@ -64,6 +65,11 @@ def create_app():
             "Admin@123",
         ),
     )
+    if test_config is not None:
+        app.config.update(
+            test_config
+        )
+
 
     os.makedirs(
         app.instance_path,
@@ -128,10 +134,14 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-        create_default_admin(
-            email=app.config["ADMIN_EMAIL"],
-            password=app.config["ADMIN_PASSWORD"],
-        )
+        if app.config.get(
+                "SEED_DEFAULT_ADMIN",
+                True,
+        ):
+            create_default_admin(
+                email=app.config["ADMIN_EMAIL"],
+                password=app.config["ADMIN_PASSWORD"],
+            )
 
     return app
 
