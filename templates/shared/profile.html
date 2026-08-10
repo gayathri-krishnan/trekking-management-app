@@ -1,0 +1,15 @@
+@trekker_bp.route(
+    "/profile",
+    methods=["GET", "POST"],
+)
+@login_required
+@role_required("trekker")
+def profile():
+    """
+    Display and update the current Trekker's profile.
+    """
+
+    return profile_page(
+        role_title="Trekker",
+        profile_endpoint="trekker.profile",
+    )

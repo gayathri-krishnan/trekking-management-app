@@ -17,6 +17,7 @@ from sqlalchemy.orm import selectinload
 from decorators import approved_staff_required
 from extensions import db
 from models import Booking, Trek, User, BookingEvent
+from profile_helpers import profile_page
 
 
 staff_bp = Blueprint(
@@ -1099,16 +1100,18 @@ def history():
         year_options=year_options,
     )
 
-@staff_bp.route("/profile")
+@staff_bp.route(
+    "/profile",
+    methods=["GET", "POST"],
+)
 @login_required
 @approved_staff_required
 def profile():
-    return _render_placeholder(
-        page_title="Staff Profile",
-        description=(
-            "View and update the current Staff member's "
-            "contact information."
-        ),
-        active_page="profile",
-        planned_milestone="Milestone 12",
+    """
+    Display and update the current Staff member's profile.
+    """
+
+    return profile_page(
+        role_title="Trek Staff",
+        profile_endpoint="staff.profile",
     )

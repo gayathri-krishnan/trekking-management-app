@@ -12,7 +12,7 @@ from flask_login import current_user, login_required
 from extensions import db, login_manager
 from models import User
 from seed_data import create_default_admin
-
+from error_handlers import register_error_handlers
 
 @login_manager.user_loader
 def load_user(user_id: str):
@@ -89,6 +89,7 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(staff_bp)
     app.register_blueprint(trekker_bp)
+    register_error_handlers(app)
 
     @app.route("/")
     def home():

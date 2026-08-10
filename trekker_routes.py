@@ -17,7 +17,7 @@ from sqlalchemy.orm import joinedload
 from decorators import role_required
 from extensions import db
 from models import Booking, BookingEvent, Trek
-
+from profile_helpers import profile_page
 
 trekker_bp = Blueprint(
     "trekker",
@@ -1195,16 +1195,18 @@ def history():
     )
 
 
-@trekker_bp.route("/profile")
+@trekker_bp.route(
+    "/profile",
+    methods=["GET", "POST"],
+)
 @login_required
 @role_required("trekker")
 def profile():
-    return _render_placeholder(
-        page_title="My Profile",
-        description=(
-            "View and update the current Trekker's name, "
-            "email, and contact information."
-        ),
-        active_page="profile",
-        planned_milestone="Milestone 12",
+    """
+    Display and update the current Trekker's profile.
+    """
+
+    return profile_page(
+        role_title="Trekker",
+        profile_endpoint="trekker.profile",
     )
